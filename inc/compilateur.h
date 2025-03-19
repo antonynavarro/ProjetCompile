@@ -9,17 +9,25 @@
 
 /* Définition des constantes */
 #define MAX_SYMBOLES 100
+#define MAX_FONCTIONS 100
 
 /* Structures */
 typedef struct {
-    char ident[50];
-    char type[50];
+    char * ident;
+    char * type;
+    char * value;
 } Symbole;
 
 typedef struct {
     Symbole symb[MAX_SYMBOLES];
     int count;
 } TableSymbole;
+
+typedef struct fonction{
+    char * nom;
+    TableSymbole table;
+    Fonction * suivant;
+} Fonction;
 
 
 /* Prototypes des fonctions */
