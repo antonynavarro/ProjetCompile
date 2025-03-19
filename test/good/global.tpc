@@ -1,0 +1,7 @@
+int FOO;
+char BAR;
+int MAX, MIN;
+char TEXT, FILE;
+
+int main(void){
+}

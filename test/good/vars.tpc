@@ -1,0 +1,6 @@
+void vars(void){
+    int a;
+    char b;
+    int c, d, e;
+    char f, g, h;
+}

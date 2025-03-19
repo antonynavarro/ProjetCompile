@@ -1,0 +1,4 @@
+void vars(){
+    int a;
+    char b;
+}

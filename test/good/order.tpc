@@ -1,0 +1,9 @@
+void order(void){
+    int a, b, c, d, e, f;
+    a = 10;
+    b = a + 10;
+    c = a < b;
+    d = a > b;
+    e = a <= b;
+    f = a >= b;
+}

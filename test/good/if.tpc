@@ -1,0 +1,14 @@
+int main(void){
+    int a, b;
+    a = 10;
+    b = 2;
+    if (a == b){
+        a = a + b;
+    }
+    if (a - b == 0){
+        a = 0;
+    }
+    else {
+        b = 0;
+    }
+}

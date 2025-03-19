@@ -1,0 +1,10 @@
+int add(int a, int b){
+    return a + b;
+}
+
+char text(char t){
+    return t;
+}
+
+void print(int s){
+}

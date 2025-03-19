@@ -1,0 +1,4 @@
+test(int a, char b) {
+    int a;
+    char b;
+}

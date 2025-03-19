@@ -1,0 +1,75 @@
+int FOO;
+char BAR;
+int MAX, MIN;
+char TEXT, FILE;
+
+void vars(void){
+    int a;
+    char b;
+    int c, d, e;
+    char f, g, h;
+}
+
+void local(void){
+    static int foo;
+    static char bar;
+    static int max, min, avrg;
+    static char text, title;
+    return 0;
+}
+
+void order(void){
+    int a, b, c, d, e, f;
+    a = 10;
+    b = a + 10;
+    c = a < b;
+    d = a > b;
+    e = a <= b;
+    f = a >= b;
+}
+
+void operation(void){
+    int a, b, c, d, e, f;
+    a = 10;
+    b = a + 10;
+    c = b - 20;
+    d = c * 4
+    e = d / 3;
+    f = e % 4;
+}
+
+int main(void){
+    int a, b;
+    a = 10;
+    b = 2;
+    if (a == b){
+        a = a + b;
+    }
+    if (a - b == 0){
+        a = 0;
+    }
+    else {
+        b = 0;
+    }
+}
+
+int add(int a, int b){
+    return a + b;
+}
+
+char text(char t){
+    return t;
+}
+
+void print(int s){
+}
+
+void bool(int a, int b){
+    if (a == b && a == 0){
+        return 0;
+    }
+    if (a != b || a != 0){
+        return a;
+    }
+    return b;
+}

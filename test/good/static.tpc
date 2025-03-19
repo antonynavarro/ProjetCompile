@@ -1,0 +1,7 @@
+void local (void){
+    static int foo;
+    static char bar;
+    static int max, min, avrg;
+    static char text, title;
+    return 0;
+}

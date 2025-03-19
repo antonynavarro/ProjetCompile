@@ -1,0 +1,4 @@
+static int FOO;
+
+int main(void){
+}
