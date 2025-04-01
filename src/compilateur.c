@@ -13,25 +13,7 @@ void rempliTable(TableSymbole* table, const char* ident, const char* type);
 void generateNASM(Node *node, FILE *out);
 void translate(Node* root);
 
-/* Check if an identifier exists in the symbol table */
-int identExiste(const TableSymbole* table, const char* ident) {
-    for (int i = 0; i < table->count; i++) {
-        if (strcmp(table->symb[i].ident, ident) == 0) {
-            return 1;
-        }
-    }
-    return 0;
-}
 
-/* Add an identifier to the symbol table */
-void rempliTable(TableSymbole* table, const char* ident, const char* type) {
-    if (identExiste(table, ident) || table->count >= MAX_SYMBOLES) {
-        return;
-    }
-    strncpy(table->symb[table->count].ident, ident, sizeof(table->symb[table->count].ident) - 1);
-    strncpy(table->symb[table->count].type, type, sizeof(table->symb[table->count].type) - 1);
-    table->count++;
-}
 
 void generateNASM(Node *node, FILE *out) {
     static int depth = 0;  
@@ -91,16 +73,131 @@ void generateNASM(Node *node, FILE *out) {
 }
 
 void translate(Node* root) {
-    FILE *out = fopen("_anonymous.asm", "w"); // Correction du nom du fichier
+	
+    TableSymbole globalTable = {.count = 0};
+    TableSymbole localTable = {.count = 0};
+
+    // Générer la table des variables globales
+    generateGlobalSymbolTable(root, &globalTable);
+    printSymbolTable(&globalTable);
+
+    // Générer les tables des fonctions
+    generateLocalSymbolTable(root, &localTable);
+    printSymbolTable(&localTable);
+    
+    
+    FILE *out = fopen("_anonymous.asm", "w");
     if (!out) {
         perror("Error opening _anonymous.asm");
         exit(EXIT_FAILURE);
     }
     fprintf(out, "section .text\n    global _start\n_start:\n");
     
-    if (root) generateNASM(root, out); // Vérifie que root n'est pas NULL
+    if (root) generateNASM(root, out);
 
     fprintf(out, "    mov rax, 60\n    xor rdi, rdi\n    syscall\n");
     fclose(out);
 }
+
+
+
+/* POUR LA TABLE DES SYMBOLES */
+int identExiste(const TableSymbole* table, const char* ident) {
+    for (int i = 0; i < table->count; i++) {
+        if (strcmp(table->symb[i].ident, ident) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
+void addSymbol(TableSymbole* table, const char* ident, const char* type, Scope scope, int address) {
+    if (identExiste(table, ident) || table->count >= MAX_SYMBOLES) {
+        return;
+    }
+    strncpy(table->symb[table->count].ident, ident, sizeof(table->symb[table->count].ident) - 1);
+    strncpy(table->symb[table->count].type, type, sizeof(table->symb[table->count].type) - 1);
+    table->symb[table->count].scope = scope;
+    table->symb[table->count].address = address;
+    table->count++;
+}
+
+void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
+    if (!node) return;
+
+    // Vérifie si le nœud représente une déclaration globale
+    if (strcmp(node->label, "Global") == 0) {
+        Node *decl = node->firstChild;
+        while (decl) {
+            // Vérifie si le nœud est un type (int, char, etc.)
+            if (strcmp(decl->label, "int") == 0 || strcmp(decl->label, "char") == 0) {
+                // Parcourt les enfants pour trouver les identifiants associés
+                Node *var = decl->firstChild;
+                while (var) {
+                    addSymbol(table, var->label, decl->label, GLOBAL, 0);  // Utilise le type du parent
+                    var = var->nextSibling;
+                }
+            }
+            decl = decl->nextSibling;
+        }
+    }
+
+    // Parcours récursif des enfants
+    generateGlobalSymbolTable(node->firstChild, table);
+    generateGlobalSymbolTable(node->nextSibling, table);
+}
+
+
+void generateLocalSymbolTable(Node *node, TableSymbole* table) {
+    if (!node) return;
+
+    // Vérifie si le nœud représente une déclaration de fonction
+    if (strcmp(node->label, "Function") == 0) {
+        Node *head = node->firstChild;
+        Node *body = head->nextSibling;
+
+        // Ajouter les paramètres
+        Node *paramNode = head->firstChild->nextSibling->nextSibling;
+        if (paramNode && strcmp(paramNode->label, "Parameter") == 0) {
+            Node *param = paramNode->firstChild;
+            while (param) {
+                addSymbol(table, param->label, "int", LOCAL, 0);  // Exemple avec "int"
+                param = param->nextSibling;
+            }
+        }
+
+        // Ajouter les variables locales
+        if (body && strcmp(body->label, "Body") == 0) {
+            Node *varNode = body->firstChild;
+            while (varNode) {
+                if (strcmp(varNode->label, "Vars") == 0) {
+                    Node *var = varNode->firstChild;
+                    while (var) {
+                        addSymbol(table, var->label, "int", LOCAL, 0);  // Exemple avec "int"
+                        var = var->nextSibling;
+                    }
+                }
+                varNode = varNode->nextSibling;
+            }
+        }
+    }
+
+    // Parcours récursif
+    generateLocalSymbolTable(node->firstChild, table);
+    generateLocalSymbolTable(node->nextSibling, table);
+}
+
+
+void printSymbolTable(TableSymbole* table) {
+    printf("\nTable des Symboles:\n");
+    for (int i = 0; i < table->count; i++) {
+        printf("Nom: %s, Type: %s, Portée: %s, Adresse: %d\n", 
+               table->symb[i].ident, 
+               table->symb[i].type,
+               (table->symb[i].scope == GLOBAL) ? "Global" : "Local",
+               table->symb[i].address);
+    }
+}
+
 
