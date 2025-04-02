@@ -112,7 +112,7 @@ int identExiste(const TableSymbole* table, const char* ident) {
 }
 
 
-void addSymbol(TableSymbole* table, const char* ident, const char* type, Scope scope, int address) {
+void addSymbol(TableSymbole* table, const char* ident, const char* type, Scope scope, void * address) {
     if (identExiste(table, ident) || table->count >= MAX_SYMBOLES) {
         return;
     }
@@ -155,14 +155,19 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
     // Vérifie si le nœud représente une déclaration de fonction
     if (strcmp(node->label, "Function") == 0) {
         Node *head = node->firstChild;
+        char *name = head->firstChild->nextSibling->label;
         Node *body = head->nextSibling;
+
+        addSymbol(table, name, head->firstChild->label, LOCAL, head);  // Utilise le type du parent
 
         // Ajouter les paramètres
         Node *paramNode = head->firstChild->nextSibling->nextSibling;
         if (paramNode && strcmp(paramNode->label, "Parameter") == 0) {
             Node *param = paramNode->firstChild;
             while (param) {
-                addSymbol(table, param->label, "int", LOCAL, 0);  // Exemple avec "int"
+                if (strcmp(param->label, "void") != 0){
+                    addSymbol(table, name, param->label, LOCAL, param);
+                }
                 param = param->nextSibling;
             }
         }
@@ -174,7 +179,11 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
                 if (strcmp(varNode->label, "Vars") == 0) {
                     Node *var = varNode->firstChild;
                     while (var) {
-                        addSymbol(table, var->label, "int", LOCAL, 0);  // Exemple avec "int"
+                        Node *ident = var->firstChild;
+                        while (ident) {
+                            addSymbol(table, ident->label, var->label, LOCAL, &(ident->value));
+                            ident = ident->nextSibling;
+                        }
                         var = var->nextSibling;
                     }
                 }
@@ -192,11 +201,12 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
 void printSymbolTable(TableSymbole* table) {
     printf("\nTable des Symboles:\n");
     for (int i = 0; i < table->count; i++) {
-        printf("Nom: %s, Type: %s, Portée: %s, Adresse: %d\n", 
+        printf("Nom: %s, Type: %s, Portée: %s, Adresse: %p\n", 
                table->symb[i].ident, 
                table->symb[i].type,
                (table->symb[i].scope == GLOBAL) ? "Global" : "Local",
                table->symb[i].address);
+        printf("Valeur : %s\n", (char*)table->symb[i].address);
     }
 }
 
