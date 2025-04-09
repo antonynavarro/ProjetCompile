@@ -206,7 +206,6 @@ void printSymbolTable(TableSymbole* table) {
                table->symb[i].type,
                (table->symb[i].scope == GLOBAL) ? "Global" : "Local",
                table->symb[i].address);
-        printf("Valeur : %s\n", (char*)table->symb[i].address);
     }
 }
 
