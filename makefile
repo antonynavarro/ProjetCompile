@@ -1,4 +1,4 @@
-TARGET = tpcas
+TARGET = tpcc
 
 SRC_DIR = src
 INC_DIR = inc
