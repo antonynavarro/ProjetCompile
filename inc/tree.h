@@ -2,16 +2,21 @@
 
 #ifndef TREE_H
 #define TREE_H
-
+//#include "compilateur.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+
+struct TableSymbole;
+
 
 typedef struct Node {
   char * label;
   char * value;
   struct Node *firstChild, *nextSibling;
   int lineno;
+  struct TableSymbole *localTable;
 } Node;
 
 Node *makeNode(char * label);
