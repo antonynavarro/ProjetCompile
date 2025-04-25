@@ -18,7 +18,7 @@ for file in "$GOOD_TESTS"/*.tpc; do
         ((good_total++))
         echo -n "Test $file : "
         
-        ./bin/tpcas < "$file" > /dev/null 2>&1
+        ./bin/tpcc < "$file" > /dev/null 2>&1
         status=$?
 
         # Vérifier le code de retour attendu
@@ -38,7 +38,7 @@ for file in "$ERR_TESTS"/*.tpc; do
         ((err_total++))
         echo -n "Test $file : "
         
-        ./bin/tpcas < "$file" > /dev/null 2>&1
+        ./bin/tpcc < "$file" > /dev/null 2>&1
         status=$?
 
         # Vérifier le code de retour attendu
