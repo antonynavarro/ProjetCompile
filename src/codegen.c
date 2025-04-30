@@ -10,13 +10,13 @@ void generateNASM(Node *node, TableSymbole *globals, FILE *out) {
     if (!node) return;
 
     // Affichage pour debug
-    for (int i = 1; i < depth; i++) {
-        printf(rightmost[i] ? "    " : "│   ");
-    }
-    if (depth > 0) {
-        printf(rightmost[depth] ? "└── " : "├── ");
-    }
-    printf("Processing node: %s\n", node->label);
+    // for (int i = 1; i < depth; i++) {
+    //     printf(rightmost[i] ? "    " : "│   ");
+    // }
+    // if (depth > 0) {
+    //     printf(rightmost[depth] ? "└── " : "├── ");
+    // }
+    // printf("Processing node: %s\n", node->label);
 
 
     // Pour les condition if, else ...

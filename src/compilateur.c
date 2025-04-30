@@ -7,17 +7,17 @@
 #define MAX_SYMBOLES 100
 
 // Grosse fonction qui fait tout (à séparer plus tard)
-void translate(Node* root) {
+void translate(Node* root, bool show) {
 	
     TableSymbole globalTable = {.count = 0};
 
     //table des variables globales
     generateGlobalSymbolTable(root, &globalTable);
-    printSymbolTable(&globalTable);
+    if (show) {printSymbolTable(&globalTable);}
 
     // tables des fonctions et vars locals
     generateLocalSymbolTable(root, NULL);
-    printAllLocalSymbolTables(root);
+    if (show) {printAllLocalSymbolTables(root);}
 
     
     verifyIdentifiers(root, &globalTable, NULL);

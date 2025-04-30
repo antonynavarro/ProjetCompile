@@ -64,12 +64,10 @@ $(OBJ_DIR)/codegen.o: $(GENCODE_SRC) $(INC_DIR)/codegen.h $(INC_DIR)/compilateur
 	$(CC) $(CFLAGS) -c $(GENCODE_SRC) -o $(OBJ_DIR)/codegen.o
 
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
+	rm -rf $(OBJ_DIR) $(BIN_DIR) _anonymous.asm
 
 run: clean all
 	./$(BIN_DIR)/$(TARGET) < test/good/big.tpc
 
 test: all
 	./run_tests.sh
-
-

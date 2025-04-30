@@ -6,8 +6,9 @@
 #include "semantique.h"
 #include "codegen.h"
 #include <string.h>
+#include <stdbool.h>
 
-void translate(Node* root);
+void translate(Node* root, bool show);
 
 #endif
 

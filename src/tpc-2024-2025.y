@@ -293,19 +293,21 @@ void print_help(char * prog){
   printf("Options : \n");
   printf("  -t, --tree    Affiche l'arbre abstrai du fichier\n");
   printf("  -h, --help    Affiche cette aide\n");
+  printf("  -s, --symtabs  Affiche toutes les tables de symboles\n");
 }
 
 int option (char * arg){
   if (strcmp(arg, "-h") == 0 || strcmp(arg, "--help") == 0){ return 1; }
   else if (strcmp(arg, "-t") == 0 || strcmp(arg, "--tree") == 0) { return 2; }
+  else if (strcmp(arg, "-s") == 0 || strcmp(arg, "--symtabs") == 0) { return 3; }
   return 0;  
 }
 
 
 int main(int argc, char * argv[]) {
+    
+    int opt = 0; 
 
-    int opt = 3;
-      
     if (argc == 3){
         yyin = fopen(argv[2], "r");
 
@@ -317,35 +319,35 @@ int main(int argc, char * argv[]) {
         opt = option(argv[1]);
 
         switch (opt){
-        case 0:
-            fprintf(stderr, "L'option %s n'est pas reconnue !\n", argv[1]);
-            return 1;
-        case 1:
-            print_help(argv[0]);
-            return 0;
-        default:
-        break;
+            case 0:
+                fprintf(stderr, "L'option %s n'est pas reconnue !\n", argv[1]);
+                return 1;
+            case 1:
+                print_help(argv[0]);
+                return 0;
+            default:
+            break;
         }
 
     } else if (argc == 2 ){
         opt = option(argv[1]);
         switch (opt){
 
-        case 0:{
-            yyin = fopen(argv[1], "r");
-            if(!yyin){
-                fprintf(stderr, "Le fichier n'existe pas !\n");
-                return 1;
-            }
-            break;
-
-        }
+            case 0:
+                yyin = fopen(argv[1], "r");
+                if(!yyin){
+                    fprintf(stderr, "Le fichier n'existe pas !\n");
+                    return 1;
+                }
+                break;
+                
+            case 1:
+                print_help(argv[0]);
+                return 0;
             
-        case 1:
-            print_help(argv[0]);
-            return 0;
-        default:
-        break;
+            default:
+                break;
+
         }
     }
     else if( argc > 3){
@@ -361,12 +363,22 @@ int main(int argc, char * argv[]) {
     if (parseResult == 0) {
 
         printf("Analyse réussie.\n");
-        translate(root);
 
-        if (opt == 2){
-            printTree(root);
-            deleteTree(root);
-            
+        switch (opt){
+        
+            case 2:
+                translate(root, false);
+                printTree(root);
+                deleteTree(root);
+                break;
+
+            case 3:
+                translate(root, true);
+                break;
+
+            default:
+                translate(root, false);
+                break;
         }        
         
     } else 
