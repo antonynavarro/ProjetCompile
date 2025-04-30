@@ -1,7 +1,7 @@
 #include "tabsymbole.h"
 #include <string.h>
 #include <stdlib.h>
-
+#include <stdio.h>
 
 /* POUR LA TABLE DES SYMBOLES */
 int identExiste(const TableSymbole* table, const char* ident) {
@@ -13,13 +13,31 @@ int identExiste(const TableSymbole* table, const char* ident) {
     return 0;
 }
 
+/* Vérifie si ident existe dans table avec un scope donné */
+int identExisteDansScope(const TableSymbole* table, const char* ident, Scope scope) {
+    for (int i = 0; i < table->count; i++) {
+        if (strcmp(table->symb[i].ident, ident) == 0 && table->symb[i].scope == scope) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 void addSymbol(TableSymbole* table, const char* ident, const char* type, Scope scope, int address) {
-    if (identExiste(table, ident) || table->count >= MAX_SYMBOLES) {
+    if (identExiste(table, ident)) {
+        fprintf(stderr,
+                "Erreur sémantique : \"%s\" déjà déclaré\n", ident);
+        return;
+    }
+    if (table->count >= MAX_SYMBOLES) {
+        fprintf(stderr,
+                "Erreur interne : table des symboles pleine\n");
         return;
     }
     strncpy(table->symb[table->count].ident, ident, sizeof(table->symb[table->count].ident) - 1);
+    table->symb[table->count].ident[sizeof(table->symb[table->count].ident) - 1] = '\0';
     strncpy(table->symb[table->count].type, type, sizeof(table->symb[table->count].type) - 1);
+    table->symb[table->count].type[sizeof(table->symb[table->count].type) - 1] = '\0';
     table->symb[table->count].scope = scope;
     table->symb[table->count].address = address;
     table->count++;
@@ -30,13 +48,19 @@ void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
 
     if (!node) return;
 
-    // Detecter déclarations de fonctions
     if (strcmp(node->label, "Function") == 0) {
-        const char *fn_name = SECONDCHILD(node->firstChild)->label;
-        addSymbol(table, fn_name, "function", GLOBAL, 0); //faudra changer adresse apres
+        if (SECONDCHILD(node->firstChild)) { // Sécuriser
+            const char *fn_name = SECONDCHILD(node->firstChild)->label;
+            if (identExiste(table, fn_name)) {
+                fprintf(stderr,
+                        "Erreur sémantique : Conflit nom global/fonction pour \"%s\"\n", fn_name);
+            } else {
+                addSymbol(table, fn_name, "function", GLOBAL, 0);
+            }
+        }
     }
 
-    //  Puis, les déclarations globales
+    // Déclarations globales (inchangé)
     if (strcmp(node->label, "Global") == 0) {
         Node *decl = node->firstChild;
         while (decl) {
@@ -45,25 +69,22 @@ void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
             else if (strcmp(decl->label, "char") == 0) size = 1;
             else { decl = decl->nextSibling; continue; }
 
-            // pour chaque ident d’une même ligne `int A, B, C;`
             for (Node *var = decl->firstChild; var; var = var->nextSibling) {
-                addSymbol(table,
-                          var->label,      // nom
-                          decl->label,     // type
-                          GLOBAL,          // scope
-                          offset           // adresse
-                );
-                offset += size;
+                if (identExisteDansScope(table, var->label, GLOBAL)) {
+                    fprintf(stderr,
+                            "Erreur sémantique : Variable globale \"%s\" redéclarée\n", var->label);
+                } else {
+                    addSymbol(table, var->label, decl->label, GLOBAL, offset);
+                    offset += size;
+                }
             }
-        decl = decl->nextSibling;
+            decl = decl->nextSibling;
         }
     }
 
-    // récursion
     generateGlobalSymbolTable(node->firstChild,  table);
     generateGlobalSymbolTable(node->nextSibling, table);
 }
-
 
 
 void generateLocalSymbolTable(Node *node, TableSymbole* table) {
@@ -72,26 +93,28 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
     if (strcmp(node->label, "Function") == 0) {
         Node *head = node->firstChild;
         Node *body = head->nextSibling;
-    
+
         // Création d'une nouvelle table locale
         TableSymbole *local = malloc(sizeof(TableSymbole));
         local->count = 0;
-    
         node->localTable = local; // Attache la table a ce nœud de fonction
-    
+
         // Ajouter les paramètres
         Node *paramNode = head->firstChild->nextSibling->nextSibling;
         if (paramNode && strcmp(paramNode->label, "Parameter") == 0) {
             Node *paramTypeNode = paramNode->firstChild;
             while (paramTypeNode) {
                 if (paramTypeNode->firstChild) {
+                    if (identExiste(local, paramTypeNode->firstChild->label)) {
+                        fprintf(stderr,
+                                "Erreur sémantique : Conflit paramètre/variable locale \"%s\"\n", paramTypeNode->firstChild->label);
+                    }
                     addSymbol(local, paramTypeNode->firstChild->label, paramTypeNode->label, LOCAL, 0);
                 }
                 paramTypeNode = paramTypeNode->nextSibling;
             }
         }
 
-    
         // Ajouter les variables locales
         if (body && strcmp(body->label, "Body") == 0) {
             Node *varNode = body->firstChild;
@@ -101,6 +124,10 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
                     while (typeNode) {
                         Node *identNode = typeNode->firstChild;
                         while (identNode) {
+                            if (identExiste(local, identNode->label)) {
+                                fprintf(stderr,
+                                        "Erreur sémantique : Conflit paramètre/variable locale \"%s\"\n", identNode->label);
+                            }
                             addSymbol(local, identNode->label, typeNode->label, LOCAL, 0);
                             identNode = identNode->nextSibling;
                         }
@@ -111,19 +138,16 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
             }
         }
     }
-    
 
-    // Parcours récursif
     generateLocalSymbolTable(node->firstChild, table);
     generateLocalSymbolTable(node->nextSibling, table);
 }
 
-
 void printSymbolTable(TableSymbole* table) {
     printf("\nTable des Symboles:\n");
     for (int i = 0; i < table->count; i++) {
-        printf("Nom: %s, Type: %s, Portée: %s, Adresse: %d\n", 
-               table->symb[i].ident, 
+        printf("Nom: %s, Type: %s, Portée: %s, Adresse: %d\n",
+               table->symb[i].ident,
                table->symb[i].type,
                (table->symb[i].scope == GLOBAL) ? "Global" : "Local",
                table->symb[i].address);
