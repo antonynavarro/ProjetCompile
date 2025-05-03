@@ -71,5 +71,3 @@ run: clean all
 
 test: all
 	./run_tests.sh
-
-

@@ -19,10 +19,12 @@ void translate(Node* root) {
     generateLocalSymbolTable(root, NULL);
     printAllLocalSymbolTables(root);
 
-    
+
     verifyIdentifiers(root, &globalTable, NULL);
-    // Vérification de type
+    verifyMainExists(&globalTable); // <- après la table des symboles
+    verifyReturns(root, &globalTable);
     checkAssignments(root, &globalTable, NULL);
+
 
 
     FILE *out = fopen("_anonymous.asm", "w");
