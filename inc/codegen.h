@@ -6,6 +6,7 @@
 
 void generateNASM(Node *node,TableSymbole *globals,FILE *out);
 int tryEmitGlobalConstructs(Node *node,TableSymbole *globals,FILE *out);
+void emitNASMHeader(FILE *out, TableSymbole *globals);
 //void translate(Node *root,const TableSymbole *global);
 
 #endif

@@ -33,35 +33,12 @@ void translate(Node* root) {
         exit(EXIT_FAILURE);
     }
 
-    //reserve un mot (8 octets) pour chaque int, un octet pour chaque char 
-    fprintf(out, "section .bss\n");
-    for (int i = 0; i < globalTable.count; i++) {
-        Symbole *s = &globalTable.symb[i];
-        if (strcmp(s->type, "function") == 0) {
-            // Pour plus tard ?
-            continue;
-        }
-        if (strcmp(s->type, "char") == 0) {
-            fprintf(out, "%s: resb 1    ; at offset %d\n", s->ident, s->address);
-        } else {  //int => 8 octets
-            fprintf(out, "%s: resq 1    ; at offset %d\n", s->ident, s->address);
-        }
-    }
-    fprintf(out, "\n");
+    emitNASMHeader(out, &globalTable);
+    generateNASM(root, &globalTable, out);
 
-    // Section code
-    fprintf(out, "section .text\n"
-                 "    global _start\n"
-                 "_start:\n");
+    //executer code nasm avec : nasm -felf64 _anonymous.asm && ld _anonymous.o -o prog && ./prog
 
-    // Génération du corps de _start
-    if (root) generateNASM(root,&globalTable,out);
-
-    // Exit syscall
-    fprintf(out,
-            "    mov rax, 60\n"
-            "    xor rdi, rdi\n"
-            "    syscall\n");
+    
 
     fclose(out);
 }

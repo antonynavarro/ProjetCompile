@@ -1,105 +1,83 @@
 section .bss
-FOO: resq 1    ; at offset 0
-BAR: resb 1    ; at offset 8
-MIN: resq 1    ; at offset 9
-MAX: resq 1    ; at offset 17
-FILE: resb 1    ; at offset 25
-TEXT: resb 1    ; at offset 26
-vars: resq 1    ; at offset 0
-add: resq 1    ; at offset 0
 
 section .text
     global _start
 _start:
-    ; accessing to 'FOO'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
-    push rax
-    ; accessing to 'BAR'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
-    push rax
-    ; accessing to 'MIN'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
-    push rax
-    ; accessing to 'MAX'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
-    push rax
-    ; accessing to 'FILE'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
-    push rax
-    ; accessing to 'TEXT'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
-    push rax
-vars:
-    ; save stack return address
-    push rbp
-    mov rbp, rsp
-    sub rsp, 8
-
-    ; accessing to 'a'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
-    push rax
-    ; accessing to 'b'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
-    push rax
-    ; accessing to 'e'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
-    push rax
-    ; accessing to 'd'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
-    push rax
-    ; accessing to 'c'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
-    push rax
-    ; accessing to 'h'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
-    push rax
-    ; accessing to 'g'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
-    push rax
-    ; accessing to 'f'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
-    push rax
-    ; accessing to 'Suite_instr'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
-    push rax
-    ; stack alignement before exiting the function
-    mov rsp, rbp
-    pop rbp
-    ret
+    call main
+    mov rax, 60
+    xor rdi, rdi
+    syscall
 
 add:
-    ; save stack return address
     push rbp
     mov rbp, rsp
-    ; push parameter a
-    push rdi
-    ; push parameter b
-    push rsi
+    push rdi    ; param a
+    push rsi    ; param b
     sub rsp, 8
 
-    ; accessing to 'Vars'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
+    mov rax, [rbp-8]    ; var Vars
     push rax
-    ; accessing to 'a'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
+    mov rax, [rbp-8]    ; var a
     push rax
-    ; accessing to 'b'
-    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres
+    mov rax, [rbp-8]    ; var b
     push rax
     pop rcx
     pop rax
     add rax, rcx
     push rax
-    ; return value loading
-    pop rax
+    pop rax    ; return value
     mov rsp, rbp
     pop rbp
     ret
-    ; stack alignement before exiting the function
     mov rsp, rbp
     pop rbp
     ret
 
-    mov rax, 60
-    xor rdi, rdi
-    syscall
+text:
+    push rbp
+    mov rbp, rsp
+    push rdi    ; param t
+    sub rsp, 8
+
+    mov rax, [rbp-8]    ; var Vars
+    push rax
+    mov rax, [rbp-8]    ; var t
+    push rax
+    pop rax    ; return value
+    mov rsp, rbp
+    pop rbp
+    ret
+    mov rsp, rbp
+    pop rbp
+    ret
+
+print:
+    push rbp
+    mov rbp, rsp
+    push rdi    ; param s
+    sub rsp, 8
+
+    mov rax, [rbp-8]    ; var Vars
+    push rax
+    mov rax, [rbp-8]    ; var Suite_instr
+    push rax
+    mov rsp, rbp
+    pop rbp
+    ret
+
+main:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 8
+
+    mov rax, [rbp-8]    ; var Vars
+    push rax
+    push 0    ; literal
+    pop rax    ; return value
+    mov rsp, rbp
+    pop rbp
+    ret
+    mov rsp, rbp
+    pop rbp
+    ret
+
