@@ -1,0 +1,18 @@
+void skibidi(void){
+    return 'a';
+}
+
+char text(char t){
+    int count;
+    count = 'a';
+    return 1;
+}
+
+int foo(void){
+    return 1;
+}
+
+void main(void) {
+    return 0;  
+}
+

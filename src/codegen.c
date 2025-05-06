@@ -1,127 +1,146 @@
+// src/codegen.c
 #include "codegen.h"
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
+void emitNASMHeader(FILE *out, TableSymbole *globals) {
+    fprintf(out, "section .bss\n");
+    for (int i = 0; i < globals->count; i++) {
+        Symbole *s = &globals->symb[i];
+        if (strcmp(s->type, "function") == 0) continue;
+        if (strcmp(s->type, "char") == 0)
+            fprintf(out, "%s: resb 1\n", s->ident);
+        else
+            fprintf(out, "%s: resq 1\n", s->ident);
+    }
+
+    fprintf(out,
+        "\nsection .text\n"
+        "    global _start\n"
+        "_start:\n"
+        "    call main\n"
+        "    mov rax, 60\n"
+        "    xor rdi, rdi\n"
+        "    syscall\n\n");
+}
+
 void generateNASM(Node *node, TableSymbole *globals, FILE *out) {
     static int depth = 0;
-    static bool rightmost[128];
+    //static bool rightmost[128];
 
     if (!node) return;
 
-    // Affichage pour debug
-    // for (int i = 1; i < depth; i++) {
+    // DEBUG VISUEL
+    // for (int i = 1; i < depth; i++)
     //     printf(rightmost[i] ? "    " : "│   ");
-    // }
-    // if (depth > 0) {
+    // if (depth > 0)
     //     printf(rightmost[depth] ? "└── " : "├── ");
-    // }
     // printf("Processing node: %s\n", node->label);
 
+    // === Début de fonction ===
+    if (strcmp(node->label, "Function") == 0) {
+        const char *fn_name = SECONDCHILD(node->firstChild)->label;
+        fprintf(out, "%s:\n", fn_name);
 
-    // Pour les condition if, else ...
-    if (tryEmitGlobalConstructs(node, globals, out)) return;
-
-    // Accès aux variables globales
-    if (node->label && isalpha(node->label[0]) && identExiste(globals, node->label)) {
+        // Préambule standard
         fprintf(out,
-                "    mov rax, [%s]\n"
-                "    push rax\n",
-                node->label);
+            "    ; save stack return address\n"
+            "    push rbp\n"
+            "    mov rbp, rsp\n");
+
+        // Gestion des paramètres (rdi, rsi, etc.)
+        Node *paramNode = node->firstChild->firstChild->nextSibling->nextSibling;
+        int param_offset = -8;
+        if (paramNode && strcmp(paramNode->label, "Parameter") == 0) {
+            int regIndex = 0;
+            const char *paramRegs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+            for (Node *typeNode = paramNode->firstChild; typeNode; typeNode = typeNode->nextSibling) {
+                if (typeNode->firstChild && regIndex < 6) {
+                    fprintf(out, "    ; push parameter %s\n", typeNode->firstChild->label);
+                    fprintf(out, "    push %s\n", paramRegs[regIndex++]);
+                    param_offset -= 8;
+                }
+            }
+        }
+
+        // Réserve de l’espace local minimal
+        fprintf(out, "    sub rsp, 8\n\n");
+
+        // Poursuit le corps de la fonction
+        generateNASM(node->firstChild->nextSibling, globals, out);
+
+        // Épilogue par défaut (utile pour fonctions vides)
+        fprintf(out,
+            "    ; stack alignement before exiting the function\n"
+            "    mov rsp, rbp\n"
+            "    pop rbp\n"
+            "    ret\n\n");
         return;
     }
 
-    // Constantes numériques
-    if (node->label && (isdigit(node->label[0]) || (node->label[0] == '-' && isdigit(node->label[1])))) {
-        fprintf(out, "    push %s\n", node->label);
+    // === return Exp ===
+    if (strcmp(node->label, "Return") == 0 && node->firstChild) {
+        generateNASM(node->firstChild, globals, out);
+        fprintf(out,
+            "    ; return value loading\n"
+            "    pop rax\n"
+            "    mov rsp, rbp\n"
+            "    pop rbp\n"
+            "    ret\n");
         return;
     }
 
-    // Opérations AddSub
-    if (node->label && strcmp(node->label, "AddSub") == 0) {
-        if (node->firstChild)
-            generateNASM(node->firstChild, globals, out);
-        if (node->firstChild && node->firstChild->nextSibling)
-            generateNASM(node->firstChild->nextSibling, globals, out);
+    // === Constante littérale ===
+    if (isdigit(node->label[0]) || (node->label[0] == '-' && isdigit(node->label[1]))) {
+        fprintf(out,
+            "    ; literal value\n"
+            "    push %s\n", node->label);
+        return;
+    }
 
-        if (node->value && strcmp(node->value, "+") == 0) {
-            fprintf(out, "    pop rbx\n    pop rax\n    add rax, rbx\n    push rax\n");
+    // === Opérations Add/Sub ===
+    if (strcmp(node->label, "AddSub") == 0) {
+        generateNASM(node->firstChild, globals, out);
+        generateNASM(node->firstChild->nextSibling, globals, out);
+        if (strcmp(node->value, "+") == 0) {
+            fprintf(out,
+                "    pop rcx\n"
+                "    pop rax\n"
+                "    add rax, rcx\n"
+                "    push rax\n");
         } else {
-            fprintf(out, "    pop rbx\n    pop rax\n    sub rax, rbx\n    push rax\n");
+            fprintf(out,
+                "    pop rcx\n"
+                "    pop rax\n"
+                "    sub rax, rcx\n"
+                "    push rax\n");
         }
         return;
     }
 
-    // Comparaisons Eq
-    if (node->label && strcmp(node->label, "Eq") == 0) {
-        if (node->firstChild)
-            generateNASM(node->firstChild, globals, out);
-        if (node->firstChild && node->firstChild->nextSibling)
-            generateNASM(node->firstChild->nextSibling, globals, out);
-
-        if (node->value && strcmp(node->value, "==") == 0) {
-            fprintf(out, "    pop rbx\n    pop rax\n    cmp rax, rbx\n    sete al\n    movzx rax, al\n    push rax\n");
-        } else if (node->value && strcmp(node->value, "!=") == 0) {
-            fprintf(out, "    pop rbx\n    pop rax\n    cmp rax, rbx\n    setne al\n    movzx rax, al\n    push rax\n");
-        }
+    // === Accès variable paramètre locale (sur la pile) ===
+    if (node->firstChild == NULL && isalpha(node->label[0])) {
+        fprintf(out,
+            "    ; accessing to '%s'\n"
+            "    mov rax, [rbp - 8]  ; à adapter selon l’ordre réel des paramètres\n"
+            "    push rax\n",
+            node->label);
         return;
     }
 
-    // Parcours récursif des enfants
+    // Appel récursif
     depth++;
     for (Node *child = node->firstChild; child; child = child->nextSibling) {
-        rightmost[depth] = (child->nextSibling == NULL);
+        //rightmost[depth] = (child->nextSibling == NULL);
         generateNASM(child, globals, out);
     }
     depth--;
 }
 
-int tryEmitGlobalConstructs(Node *node,TableSymbole *globals,FILE *out){
-// 1) Affectation à une variable globale : LHS = RHS
-if (strcmp(node->label, "Eq")==0 && !node->value
-&& node->firstChild && node->firstChild->nextSibling
-&& isalpha(node->firstChild->label[0])
-&& identExiste(globals, node->firstChild->label))
-{
-Node *lhs =       node->firstChild;
-Node *rhs = lhs->nextSibling;
-// Génère le RHS
-generateNASM(rhs, globals, out);
-fprintf(out, "    pop rax\n");
-// Stocke en mémoire globale
-fprintf(out, "    mov [%s], rax\n", lhs->label);
-return 1;
-}
 
-// 2) if (var_globale) then ...
-if (strcmp(node->label, "If")==0 && node->firstChild
-&& isalpha(node->firstChild->label[0])
-&& identExiste(globals, node->firstChild->label))
-{
-static int if_id = 0;
-int id = if_id++;
-// charge et teste
-fprintf(out, "    mov rax, [%s]\n", node->firstChild->label);
-fprintf(out, "    test rax, rax\n");
-fprintf(out, "    jz else_%d\n", id);
 
-// bloc then
-generateNASM(node->firstChild->nextSibling, globals, out);
 
-// bloc else ?
-Node *maybeElse = node->firstChild->nextSibling->nextSibling;
-if (maybeElse) {
-fprintf(out, "    jmp endif_%d\n", id);
-fprintf(out, "else_%d:\n", id);
-// le fils unique de ce noeud Else est son firstChild
-generateNASM(maybeElse->firstChild, globals, out);
-}
-fprintf(out, "endif_%d:\n", id);
-return 1;
-}
-
-return 0;
-}
 
 /*
 void translate(Node* root) {

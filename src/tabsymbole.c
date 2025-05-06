@@ -23,7 +23,7 @@ int identExisteDansScope(const TableSymbole* table, const char* ident, Scope sco
     return 0;
 }
 
-void addSymbol(TableSymbole* table, const char* ident, const char* type, Scope scope, int address) {
+void addSymbol(TableSymbole* table, const char* ident, const char* type, Scope scope, int address, int isFunction) {
     if (identExiste(table, ident)) {
         fprintf(stderr,
                 "Erreur sémantique : \"%s\" déjà déclaré\n", ident);
@@ -40,6 +40,7 @@ void addSymbol(TableSymbole* table, const char* ident, const char* type, Scope s
     table->symb[table->count].type[sizeof(table->symb[table->count].type) - 1] = '\0';
     table->symb[table->count].scope = scope;
     table->symb[table->count].address = address;
+    table->symb[table->count].isFunction = isFunction;
     table->count++;
 }
 
@@ -51,11 +52,12 @@ void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
     if (strcmp(node->label, "Function") == 0) {
         if (SECONDCHILD(node->firstChild)) { // Sécuriser
             const char *fn_name = SECONDCHILD(node->firstChild)->label;
+            const char *fn_type = FIRSTCHILD(node->firstChild)->label;
             if (identExiste(table, fn_name)) {
                 fprintf(stderr,
                         "Erreur sémantique : Conflit nom global/fonction pour \"%s\"\n", fn_name);
             } else {
-                addSymbol(table, fn_name, "function", GLOBAL, 0);
+                addSymbol(table, fn_name, fn_type, GLOBAL, 0,1);
             }
         }
     }
@@ -74,7 +76,7 @@ void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
                     fprintf(stderr,
                             "Erreur sémantique : Variable globale \"%s\" redéclarée\n", var->label);
                 } else {
-                    addSymbol(table, var->label, decl->label, GLOBAL, offset);
+                    addSymbol(table, var->label, decl->label, GLOBAL, offset,0);
                     offset += size;
                 }
             }
@@ -109,7 +111,7 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
                         fprintf(stderr,
                                 "Erreur sémantique : Conflit paramètre/variable locale \"%s\"\n", paramTypeNode->firstChild->label);
                     }
-                    addSymbol(local, paramTypeNode->firstChild->label, paramTypeNode->label, LOCAL, 0);
+                    addSymbol(local, paramTypeNode->firstChild->label, paramTypeNode->label, LOCAL, 0,0);
                 }
                 paramTypeNode = paramTypeNode->nextSibling;
             }
@@ -128,7 +130,7 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
                                 fprintf(stderr,
                                         "Erreur sémantique : Conflit paramètre/variable locale \"%s\"\n", identNode->label);
                             }
-                            addSymbol(local, identNode->label, typeNode->label, LOCAL, 0);
+                            addSymbol(local, identNode->label, typeNode->label, LOCAL, 0,0);
                             identNode = identNode->nextSibling;
                         }
                         typeNode = typeNode->nextSibling;

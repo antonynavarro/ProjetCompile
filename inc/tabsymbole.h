@@ -8,12 +8,15 @@
 
 typedef enum { GLOBAL, LOCAL } Scope;
 
-typedef struct Symbole{
-  char    ident[MAX_IDENT_LEN];
-  char    type[50];
-  Scope   scope;
-  int     address;
+
+typedef struct {
+  char ident[MAX_IDENT_LEN];
+  char type[50];                                           
+  Scope scope;
+  int address;   
+  int isFunction;           
 } Symbole;
+
 
 typedef struct TableSymbole {
   Symbole      symb[MAX_SYMBOLES];
@@ -21,7 +24,7 @@ typedef struct TableSymbole {
 } TableSymbole;
 
 int  identExiste(const TableSymbole*, const char*);
-void addSymbol(TableSymbole*, const char*, const char*, Scope, int address);
+void addSymbol(TableSymbole*, const char*, const char*, Scope, int address, int isFunction);
 void generateGlobalSymbolTable(Node*, TableSymbole*);
 void generateLocalSymbolTable(Node*, TableSymbole*);
 void printSymbolTable(TableSymbole* table);
