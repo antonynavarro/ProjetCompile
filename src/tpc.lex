@@ -66,6 +66,6 @@ void yyerror(char * s){
     fprintf(stderr, "%s\n", s);
 }
 
-int yywrap(){
+int yywrap(void){
     return 1;
 }

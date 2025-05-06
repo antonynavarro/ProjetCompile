@@ -326,7 +326,7 @@ int main(int argc, char * argv[]) {
                 print_help(argv[0]);
                 return 0;
             default:
-            break;
+                break;
         }
 
     } else if (argc == 2 ){
@@ -363,10 +363,9 @@ int main(int argc, char * argv[]) {
     if (parseResult == 0) {
 
         printf("Analyse réussie.\n");
-
         switch (opt){
         
-            case 2:
+            case 2: 
                 translate(root, false);
                 printTree(root);
                 deleteTree(root);
@@ -379,11 +378,13 @@ int main(int argc, char * argv[]) {
             default:
                 translate(root, false);
                 break;
-        }        
+        }
+        printf("Code erreur : %d\n", sem_error);
+        return sem_error;        
         
     } else 
         printf("Erreur pendant l'analyse à la ligne %d, code de retour : %d\n",lineno, parseResult);
 
-
-    return parseResult; 
+    printf("Code erreur : %d\n", sem_error);
+    return parseResult;
 }

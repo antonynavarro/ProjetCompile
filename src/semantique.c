@@ -4,6 +4,8 @@
 #include <ctype.h>
 #include <string.h>
 
+int sem_error = 0;
+
 /* Recherche un symbole par nom dans la table (locale puis globale). */
 static const Symbole* lookupSymbol(const TableSymbole *g,
                                    const TableSymbole *l,
@@ -40,6 +42,7 @@ void verifyIdentifiers(Node *node,
             fprintf(stderr,
                 "error (line %d): '%s' undeclared (first use in this function)\n",
                 node->lineno, node->value);
+            sem_error = 2;
         }
     }
 
@@ -87,6 +90,7 @@ const char* exprType(Node *node,
             fprintf(stderr,
                 "error (line %d): void function '%s' used in expression\n",
                 node->lineno, fn_name);
+            sem_error = 2;
         }
         return sym->type;
     }
@@ -161,6 +165,7 @@ void verifyMainExists(const TableSymbole *global)
     if (!found) {
         fprintf(stderr,
             "error: undefined reference to ‘main’\n");
+            sem_error = 2;
     }
 }
 
@@ -168,39 +173,52 @@ void verifyMainExists(const TableSymbole *global)
 static void checkReturnsInSubtree(Node *n,
     const char *expectedType,
     const TableSymbole *global,
-    const TableSymbole *local)
+    const TableSymbole *local,
+    int *hasReturn)
 {
     if (!n) return;
 
-    if (strcmp(n->label, "Return")==0 && n->firstChild) {
-        const char *actualType = exprType(n->firstChild, global, local);
-        if (strcmp(expectedType, "char")==0 && strcmp(actualType, "int")==0) {
-            fprintf(stderr,
-                "warning (line %d): return from ‘int’ to ‘char’ may lose data\n",
-                n->lineno);
-        }
-        else if (strcmp(expectedType, actualType)!=0) {
-            fprintf(stderr,
-                "error (line %d): return type ‘%s’ does not match function return type ‘%s’\n",
-                n->lineno,
-                actualType ? actualType : "unknown",
-                expectedType);
+    if (strcmp(n->label, "Return") == 0) {
+        *hasReturn = 1;
+        if (n->firstChild) {
+            const char *actualType = exprType(n->firstChild, global, local);
+            if (strcmp(expectedType, "char") == 0 && strcmp(actualType, "int") == 0) {
+                fprintf(stderr,
+                    "warning (line %d): return from ‘int’ to ‘char’ may lose data\n",
+                    n->lineno);
+            } else if (strcmp(expectedType, actualType) != 0) {
+                fprintf(stderr,
+                    "error (line %d): return type ‘%s’ does not match function return type ‘%s’\n",
+                    n->lineno,
+                    actualType ? actualType : "unknown",
+                    expectedType);
+                sem_error = 2;
+            }
         }
     }
 
-    checkReturnsInSubtree(n->firstChild, expectedType, global, local);
-    checkReturnsInSubtree(n->nextSibling, expectedType, global, local);
+    checkReturnsInSubtree(n->firstChild, expectedType, global, local, hasReturn);
+    checkReturnsInSubtree(n->nextSibling, expectedType, global, local, hasReturn);
 }
 
 void verifyReturns(Node *node, const TableSymbole *global) {
     if (!node) return;
 
-    if (strcmp(node->label, "Function")==0) {
+    if (strcmp(node->label, "Function") == 0) {
         const char *expectedType = FIRSTCHILD(node->firstChild)->label;
         const TableSymbole *local = node->localTable;
         Node *body = node->firstChild->nextSibling;
 
-        checkReturnsInSubtree(body, expectedType, global, local);
+        int hasReturn = 0;
+        checkReturnsInSubtree(body, expectedType, global, local, &hasReturn);
+
+        if (strcmp(expectedType, "void") != 0 && !hasReturn) {
+            fprintf(stderr,
+                "error: function '%s' with non-void return type must return a value\n",
+                node->firstChild->label);
+            sem_error = 2;
+        }
+
         verifyReturns(node->nextSibling, global);
         return;
     }
