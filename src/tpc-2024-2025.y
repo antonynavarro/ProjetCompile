@@ -384,5 +384,6 @@ int main(int argc, char * argv[]) {
     } else 
         printf("Erreur pendant l'analyse à la ligne %d, code de retour : %d\n",lineno, parseResult);
 
-    return parseResult ; 
+
+    return parseResult; 
 }
