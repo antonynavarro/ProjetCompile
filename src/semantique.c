@@ -78,12 +78,14 @@ const char* exprType(Node *node,
         const Symbole *sym = lookupSymbol(g, l, fn_name);
         if (!sym) {
             // l'erreur sera rapportée par verifyIdentifiers
+            sem_error = 2;
             return NULL;
         }
         if (!sym->isFunction) {
             fprintf(stderr,
                 "error (line %d): '%s' is not a function\n",
                 node->lineno, fn_name);
+            sem_error = 2;
             return NULL;
         }
         if (strcmp(sym->type, "void")==0) {
