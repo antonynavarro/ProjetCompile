@@ -131,9 +131,6 @@ void generateNASM(Node *node, TableSymbole *globals, FILE *out) {
         generateNASM(c, globals, out);
 }
 
-
-
-
 /*
 void translate(Node* root) {
 	

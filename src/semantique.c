@@ -4,8 +4,6 @@
 #include <ctype.h>
 #include <string.h>
 
-int sem_error = 0;
-
 /* Recherche un symbole par nom dans la table (locale puis globale). */
 static const Symbole* lookupSymbol(const TableSymbole *g,
                                    const TableSymbole *l,

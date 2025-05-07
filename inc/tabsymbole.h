@@ -6,6 +6,8 @@
 #define MAX_SYMBOLES   100
 #define MAX_IDENT_LEN   50
 
+extern int sem_error;
+
 typedef enum { GLOBAL, LOCAL } Scope;
 
 

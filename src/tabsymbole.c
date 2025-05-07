@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+int sem_error = 0;
+
 /* POUR LA TABLE DES SYMBOLES */
 int identExiste(const TableSymbole* table, const char* ident) {
     for (int i = 0; i < table->count; i++) {
@@ -27,6 +29,7 @@ void addSymbol(TableSymbole* table, const char* ident, const char* type, Scope s
     if (identExiste(table, ident)) {
         fprintf(stderr,
                 "Erreur sémantique : \"%s\" déjà déclaré\n", ident);
+        sem_error = 2;
         return;
     }
     if (table->count >= MAX_SYMBOLES) {
@@ -56,6 +59,7 @@ void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
             if (identExiste(table, fn_name)) {
                 fprintf(stderr,
                         "Erreur sémantique : Conflit nom global/fonction pour \"%s\"\n", fn_name);
+                sem_error = 2;
             } else {
                 addSymbol(table, fn_name, fn_type, GLOBAL, 0,1);
             }
@@ -75,6 +79,7 @@ void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
                 if (identExisteDansScope(table, var->label, GLOBAL)) {
                     fprintf(stderr,
                             "Erreur sémantique : Variable globale \"%s\" redéclarée\n", var->label);
+                    sem_error = 2;
                 } else {
                     addSymbol(table, var->label, decl->label, GLOBAL, offset,0);
                     offset += size;
@@ -110,6 +115,7 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
                     if (identExiste(local, paramTypeNode->firstChild->label)) {
                         fprintf(stderr,
                                 "Erreur sémantique : Conflit paramètre/variable locale \"%s\"\n", paramTypeNode->firstChild->label);
+                        sem_error = 2;
                     }
                     addSymbol(local, paramTypeNode->firstChild->label, paramTypeNode->label, LOCAL, 0,0);
                 }
@@ -129,6 +135,7 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
                             if (identExiste(local, identNode->label)) {
                                 fprintf(stderr,
                                         "Erreur sémantique : Conflit paramètre/variable locale \"%s\"\n", identNode->label);
+                                sem_error = 2;
                             }
                             addSymbol(local, identNode->label, typeNode->label, LOCAL, 0,0);
                             identNode = identNode->nextSibling;
