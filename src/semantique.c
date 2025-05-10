@@ -35,11 +35,18 @@ void verifyIdentifiers(Node *node,
     }
 
     if (strcmp(node->label, "IDENT") == 0) {
-        const Symbole *sym = lookupSymbol(global, curLocal, node->value);
-        if (!sym) {
+        if (node->value) {
+            const Symbole *sym = lookupSymbol(global, curLocal, node->value);
+            if (!sym) {
+                fprintf(stderr,
+                    "error (line %d): '%s' undeclared (first use in this function)\n",
+                    node->lineno, node->value);
+                sem_error = 2;
+            }
+        } else {
             fprintf(stderr,
-                "error (line %d): '%s' undeclared (first use in this function)\n",
-                node->lineno, node->value);
+                "error (line %d): identifier has no value\n",
+                node->lineno);
             sem_error = 2;
         }
     }
