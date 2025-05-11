@@ -127,17 +127,20 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
         if (body && strcmp(body->label, "Body") == 0) {
             Node *varNode = body->firstChild;
             while (varNode) {
-                if (strcmp(varNode->label, "Vars") == 0) {
-                    Node *typeNode = varNode->firstChild;
+                if (strcmp(varNode->label, "Vars") == 0 && varNode->firstChild) {
+                    Node *typeNode = strcmp(varNode->firstChild->label, "Static") == 0 ? varNode->firstChild->firstChild : varNode->firstChild;
                     while (typeNode) {
                         Node *identNode = typeNode->firstChild;
-                        fprintf(stderr, "Ident: %s\n", identNode->value);
-                        if (identNode && identExiste(local, identNode->value)) {
-                            fprintf(stderr,
+                        while (identNode) {
+                            fprintf(stderr, "Ident: %s\n", identNode->value);
+                            if (identNode && identExiste(local, identNode->value)) {
+                                fprintf(stderr,
                                     "Erreur sémantique : Conflit paramètre/variable locale \"%s\"\n", identNode->value);
-                            sem_error = 2;
+                                sem_error = 2;
+                            }
+                            addSymbol(local, identNode->value, typeNode->label, LOCAL, 0,0);
+                            identNode = identNode->nextSibling;
                         }
-                        addSymbol(local, identNode->value, typeNode->label, LOCAL, 0,0);
                         typeNode = typeNode->nextSibling;
                     }
                 }

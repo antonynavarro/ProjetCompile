@@ -38,7 +38,7 @@ void verifyIdentifiers(Node *node,
 {
     if (!node) return;
     
-    //printf("verifyIdentifiers: %s\n", node->label);
+    printf("verifyIdentifiers: %s\n", node->label);
 
     if (strcmp(node->label, "Ident") == 0) {
         if (!lookupSymbol(global, local, node->value)) {
