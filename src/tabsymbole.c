@@ -128,7 +128,8 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
             Node *varNode = body->firstChild;
             while (varNode) {
                 if (strcmp(varNode->label, "Vars") == 0 && varNode->firstChild) {
-                    Node *typeNode = strcmp(varNode->firstChild->label, "Static") == 0 ? varNode->firstChild->firstChild : varNode->firstChild;
+                    Node *varTypeNode = varNode->firstChild;
+                    Node *typeNode = strcmp(varTypeNode->label, "Static") == 0 ? varNode->firstChild->firstChild : varNode->firstChild;
                     while (typeNode) {
                         Node *identNode = typeNode->firstChild;
                         while (identNode) {
@@ -140,7 +141,12 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
                             addSymbol(local, identNode->value, typeNode->label, LOCAL, 0,0);
                             identNode = identNode->nextSibling;
                         }
-                        typeNode = typeNode->nextSibling;
+                        if (strcmp(varTypeNode->label, "Static") == 0) {
+                            varTypeNode = varTypeNode->nextSibling;
+                            typeNode = varTypeNode ? varTypeNode->firstChild : NULL;
+                        } else {
+                            typeNode = typeNode->nextSibling;
+                        }
                     }
                 }
                 varNode = varNode->nextSibling;
