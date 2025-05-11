@@ -22,39 +22,6 @@ static const Symbole* lookupSymbol(const TableSymbole *g,
     return NULL;
 }
 
-/* Vérifie que tous les identifiants sont déclarés avant utilisation. */
-void verifyIdentifiers(Node *node,
-                       const TableSymbole *global,
-                       const TableSymbole *local)
-{
-    if (!node) return;
-
-    const TableSymbole *curLocal = local;
-    if (strcmp(node->label, "Function") == 0 && node->localTable) {
-        curLocal = node->localTable;
-    }
-
-    if (strcmp(node->label, "IDENT") == 0) {
-        if (node->value) {
-            const Symbole *sym = lookupSymbol(global, curLocal, node->value);
-            if (!sym) {
-                fprintf(stderr,
-                    "error (line %d): '%s' undeclared (first use in this function)\n",
-                    node->lineno, node->value);
-                sem_error = 2;
-            }
-        } else {
-            fprintf(stderr,
-                "error (line %d): identifier has no value\n",
-                node->lineno);
-            sem_error = 2;
-        }
-    }
-
-    verifyIdentifiers(node->firstChild, global, curLocal);
-    verifyIdentifiers(node->nextSibling, global, local);
-}
-
 /* Retourne le type (chaîne) d’un ident ou NULL si non trouvé. */
 const char* lookupType(const TableSymbole *g,
                        const TableSymbole *l,
@@ -62,6 +29,28 @@ const char* lookupType(const TableSymbole *g,
 {
     const Symbole *sym = lookupSymbol(g, l, ident);
     return sym ? sym->type : NULL;
+}
+
+/* Vérifie que tous les identifiants sont déclarés avant utilisation. */
+void verifyIdentifiers(Node *node,
+                       const TableSymbole *global,
+                       const TableSymbole *local)
+{
+    if (!node) return;
+    
+    //printf("verifyIdentifiers: %s\n", node->label);
+
+    if (strcmp(node->label, "Ident") == 0) {
+        if (!lookupSymbol(global, local, node->value)) {
+            fprintf(stderr,
+                "error (line %d): identifier '%s' not declared\n",
+                node->lineno, node->value);
+            sem_error = 2;
+        }
+    }
+
+    verifyIdentifiers(node->firstChild, global, local);
+    verifyIdentifiers(node->nextSibling, global, local);
 }
 
 /* Calcule le type d’une expression. */
@@ -82,8 +71,6 @@ const char* exprType(Node *node,
         const char *fn_name = node->firstChild->label;
         const Symbole *sym = lookupSymbol(g, l, fn_name);
         if (!sym) {
-            // l'erreur sera rapportée par verifyIdentifiers
-            sem_error = 2;
             return NULL;
         }
         if (!sym->isFunction) {

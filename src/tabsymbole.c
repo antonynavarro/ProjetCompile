@@ -54,7 +54,7 @@ void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
 
     if (strcmp(node->label, "Function") == 0) {
         if (SECONDCHILD(node->firstChild)) { // Sécuriser
-            const char *fn_name = SECONDCHILD(node->firstChild)->label;
+            const char *fn_name = SECONDCHILD(node->firstChild)->value;
             const char *fn_type = FIRSTCHILD(node->firstChild)->label;
             if (identExiste(table, fn_name)) {
                 fprintf(stderr,
@@ -76,12 +76,12 @@ void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
             else { decl = decl->nextSibling; continue; }
 
             for (Node *var = decl->firstChild; var; var = var->nextSibling) {
-                if (identExisteDansScope(table, var->label, GLOBAL)) {
+                if (identExisteDansScope(table, var->value, GLOBAL)) {
                     fprintf(stderr,
                             "Erreur sémantique : Variable globale \"%s\" redéclarée\n", var->label);
                     sem_error = 2;
                 } else {
-                    addSymbol(table, var->label, decl->label, GLOBAL, offset,0);
+                    addSymbol(table, var->value, decl->label, GLOBAL, offset,0);
                     offset += size;
                 }
             }
@@ -112,12 +112,12 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
             Node *paramTypeNode = paramNode->firstChild;
             while (paramTypeNode) {
                 if (paramTypeNode->firstChild) {
-                    if (identExiste(local, paramTypeNode->firstChild->label)) {
+                    if (identExiste(local, paramTypeNode->firstChild->value)) {
                         fprintf(stderr,
                                 "Erreur sémantique : Conflit paramètre/variable locale \"%s\"\n", paramTypeNode->firstChild->label);
                         sem_error = 2;
                     }
-                    addSymbol(local, paramTypeNode->firstChild->label, paramTypeNode->label, LOCAL, 0,0);
+                    addSymbol(local, paramTypeNode->firstChild->value, paramTypeNode->label, LOCAL, 0,0);
                 }
                 paramTypeNode = paramTypeNode->nextSibling;
             }
@@ -131,15 +131,13 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
                     Node *typeNode = varNode->firstChild;
                     while (typeNode) {
                         Node *identNode = typeNode->firstChild;
-                        while (identNode) {
-                            if (identExiste(local, identNode->label)) {
-                                fprintf(stderr,
-                                        "Erreur sémantique : Conflit paramètre/variable locale \"%s\"\n", identNode->label);
-                                sem_error = 2;
-                            }
-                            addSymbol(local, identNode->label, typeNode->label, LOCAL, 0,0);
-                            identNode = identNode->nextSibling;
+                        fprintf(stderr, "Ident: %s\n", identNode->value);
+                        if (identNode && identExiste(local, identNode->value)) {
+                            fprintf(stderr,
+                                    "Erreur sémantique : Conflit paramètre/variable locale \"%s\"\n", identNode->value);
+                            sem_error = 2;
                         }
+                        addSymbol(local, identNode->value, typeNode->label, LOCAL, 0,0);
                         typeNode = typeNode->nextSibling;
                     }
                 }
@@ -167,7 +165,7 @@ void printAllLocalSymbolTables(Node *node) {
     if (!node) return;
 
     if (strcmp(node->label, "Function") == 0 && node->localTable != NULL) {
-        printf("\nTable des symboles de la fonction : %s\n", SECONDCHILD(node->firstChild)->label);
+        printf("\nTable des symboles de la fonction : %s\n", SECONDCHILD(node->firstChild)->value);
         printSymbolTable(node->localTable);
     }
 

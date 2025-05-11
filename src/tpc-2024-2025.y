@@ -81,10 +81,14 @@ DeclVars:
 
 Declarateurs:
        Declarateurs ',' IDENT{
-            $$ = makeNode($3);
+            $$ = makeNode("Ident");
+            $$->value = $3;
             addSibling($$, $1);
        }
-    |  IDENT {$$ = makeNode($1);}
+    |  IDENT {
+            $$ = makeNode("Ident");
+            $$->value = $1;
+        }
     ;
 
 DeclFoncts:
@@ -107,7 +111,9 @@ EnTeteFonct:
        TYPE IDENT '(' Parametres ')'{
             $$ = makeNode("Head");
             addChild($$, makeNode($1));
-            addChild($$, makeNode($2));
+            Node * i = makeNode("Ident");
+            i->value = $2;
+            addChild($$, i);
             Node * p = makeNode("Parameter");
             addChild($$, p);
             addChild(p, $4);
@@ -115,7 +121,9 @@ EnTeteFonct:
     |  VOID IDENT '(' Parametres ')'{
             $$ = makeNode("Head");
             addChild($$, makeNode($1));
-            addChild($$, makeNode($2));
+            Node * i = makeNode("Ident");
+            i->value = $2;
+            addChild($$, i);
             Node * p = makeNode("Parameter");
             addChild($$, p);
             addChild(p, $4);
@@ -132,11 +140,15 @@ ListTypVar:
             $$ = $1;
             Node * t = makeNode($3);
             addSibling($$, t);
-            addChild(t, makeNode($4));
+            Node * i = makeNode("Ident");
+            i->value = $4;
+            addChild(t, i);
         }
     |  TYPE IDENT{
             $$ = makeNode($1);
-            addChild($$, makeNode($2));
+            Node * i = makeNode("Ident");
+            i->value = $2;
+            addChild($$, i);
         }
     ;
 
@@ -158,7 +170,9 @@ SuiteInstr:
 Instr:
        IDENT '=' Exp ';' {
             $$ = makeNode("Eq");
-            addChild($$, makeNode($1));
+            Node * i = makeNode("Ident");
+            i->value = $1;
+            addChild($$, i);
             addChild($$, $3);
        }
     |  IF '(' Exp ')' Instr  %prec THEN {
@@ -182,7 +196,8 @@ Instr:
             addChild($$, $5);
        }
     |  IDENT '(' Arguments  ')' ';' {
-            $$ = makeNode($1);
+            $$ = makeNode("Ident");
+            $$->value = $1;
             addChild($$, $3);
        }
     |  RETURN Exp ';' {
@@ -259,13 +274,17 @@ F   :  ADDSUB F {
             $$ = makeNode(str);
             }
     |  CHARACTER { 
-                char str[50];
-                sprintf(str, "'%c'", $1);
-                $$ = makeNode(str); 
-                }
-    |  IDENT { $$ = makeNode($1); }
+            char str[50];
+            sprintf(str, "'%c'", $1);
+            $$ = makeNode(str); 
+        }
+    |  IDENT { 
+            $$ = makeNode("Ident");
+            $$->value = $1;
+        }
     |  IDENT '(' Arguments  ')'{
-            $$ = makeNode($1);
+            $$ = makeNode("Ident");
+            $$->value = $1;
             addChild($$, $3);
         }
     ;
