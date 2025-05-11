@@ -54,7 +54,7 @@ void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
 
     if (strcmp(node->label, "Function") == 0) {
         if (SECONDCHILD(node->firstChild)) { // Sécuriser
-            const char *fn_name = SECONDCHILD(node->firstChild)->value;
+            const char *fn_name = SECONDCHILD(node->firstChild)->label;
             const char *fn_type = FIRSTCHILD(node->firstChild)->label;
             if (identExiste(table, fn_name)) {
                 fprintf(stderr,
@@ -151,7 +151,6 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
 }
 
 void printSymbolTable(TableSymbole* table) {
-    printf("\nTable des Symboles:\n");
     for (int i = 0; i < table->count; i++) {
         printf("Nom: %s, Type: %s, Portée: %s, Adresse: %d\n",
                table->symb[i].ident,
@@ -165,7 +164,7 @@ void printAllLocalSymbolTables(Node *node) {
     if (!node) return;
 
     if (strcmp(node->label, "Function") == 0 && node->localTable != NULL) {
-        printf("\nTable des symboles de la fonction : %s\n", SECONDCHILD(node->firstChild)->value);
+        printf("\nTable des symboles de la fonction : %s\n", SECONDCHILD(node->firstChild)->label);
         printSymbolTable(node->localTable);
     }
 

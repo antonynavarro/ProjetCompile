@@ -111,9 +111,7 @@ EnTeteFonct:
        TYPE IDENT '(' Parametres ')'{
             $$ = makeNode("Head");
             addChild($$, makeNode($1));
-            Node * i = makeNode("Ident");
-            i->value = $2;
-            addChild($$, i);
+            addChild($$, makeNode($2));
             Node * p = makeNode("Parameter");
             addChild($$, p);
             addChild(p, $4);
@@ -121,9 +119,7 @@ EnTeteFonct:
     |  VOID IDENT '(' Parametres ')'{
             $$ = makeNode("Head");
             addChild($$, makeNode($1));
-            Node * i = makeNode("Ident");
-            i->value = $2;
-            addChild($$, i);
+            addChild($$, makeNode($2));
             Node * p = makeNode("Parameter");
             addChild($$, p);
             addChild(p, $4);
