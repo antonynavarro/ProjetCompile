@@ -19,11 +19,16 @@ void emitNASMHeader(FILE *out, TableSymbole *globals) {
         else
             fprintf(out, "%s: resq 1\n", s->ident);
     }
-    // .text, point d’entrée
+    /* Écrit l’en‑tête requis pour l’assembleur NASM */
+    fputs("section .text\n",             out);
+    fputs("global _start\n",          out);
+    fputs("global my_putchar\n",          out);
+    fputs("global my_getchar\n",          out);
+    fputs("global my_getint\n",           out);
+    fputs("global my_putint\n\n",        out);
+
     fprintf(out,
-        "\nsection .text\n"
-        "    global _start\n"
-        "_start:\n"
+        "\n_start:\n"
         "    call main\n"
         "    mov rax, 60\n"
         "    xor rdi, rdi\n"
@@ -78,6 +83,32 @@ void generateNASM(Node *node, TableSymbole *globals, FILE *out) {
         return;
     }
 
+    // ── Appel de fonction prédéfinie ────────────────────────────
+    // ── Appel à getint() ─────────────────────────────────────────
+    if (strcmp(node->label, "getint") == 0) {
+        fprintf(out, "    call my_getint\n");
+        fprintf(out, "    push rax\n");
+        return;
+    }
+
+
+    if (strcmp(node->label, "putint") == 0 && node->firstChild) {
+        generateNASM(node->firstChild->firstChild, globals, out); // arg
+        fprintf(out, "    pop rdi\n");
+        fprintf(out, "    call my_putint\n");
+        return;
+    }
+
+    if (strcmp(node->label, "putchar") == 0 && node->firstChild) {
+        generateNASM(node->firstChild->firstChild, globals, out); // arg
+        fprintf(out, "    pop rdi\n");
+        fprintf(out, "    call my_putchar\n");
+        return;
+    }
+    
+
+    
+
     // ── Return Exp; ────────────────────────────────────────────
     if (strcmp(node->label, "Return") == 0 && node->firstChild) {
         // expr → pile
@@ -90,6 +121,23 @@ void generateNASM(Node *node, TableSymbole *globals, FILE *out) {
             "    ret\n");
         return;
     }
+
+    // ── Affectation : Eq ─────────────────────────────────────────
+    if (strcmp(node->label, "Eq") == 0) {
+        Node *lhs = node->firstChild;             // identifiant
+        Node *rhs = lhs->nextSibling;             // expression
+
+        // Génère la valeur à affecter
+        generateNASM(rhs, globals, out);
+
+        // Pop dans rax
+        fprintf(out, "    pop rax\n");
+
+        // ⚠️ Pour l’instant, on suppose une seule variable locale à [rbp-8]
+        fprintf(out, "    mov [rbp-8], rax    ; %s = ...\n", lhs->label);
+        return;
+    }
+
 
     // ── littéral entier ───────────────────────────────────────
     if (isdigit(node->label[0]) ||
@@ -131,7 +179,21 @@ void generateNASM(Node *node, TableSymbole *globals, FILE *out) {
         generateNASM(c, globals, out);
 }
 
+void add_fun_asm(FILE *out){
+    FILE *in  = fopen("inc/fun.asm", "r");
+    if (!in) {
+        perror("fun.asm");
+        exit(EXIT_FAILURE);
+    }
 
+    /* Recopie intégralement fun.asm */
+    int ch;
+    while ((ch = fgetc(in)) != EOF) {
+        fputc(ch, out);
+    }
+
+    fclose(in);
+}
 
 
 /*

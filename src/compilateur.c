@@ -35,7 +35,7 @@ void translate(Node* root, bool show) {
 
     emitNASMHeader(out, &globalTable);
     generateNASM(root, &globalTable, out);
-
+    add_fun_asm(out);
     //executer code nasm avec : nasm -felf64 _anonymous.asm && ld _anonymous.o -o prog && ./prog
 
     

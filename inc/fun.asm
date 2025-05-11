@@ -1,31 +1,3 @@
-; fun.asm – minimal I/O routines sans libc
-; Plate‑forme : Linux x86‑64, assembleur NASM, convention System V AMD64 ABI
-; Implémente :
-;   char  my_getchar(void);
-;   void  my_putchar(char c);
-;   int   my_getint(void);
-;   void  my_putint(int i);
-;
-; Les quatre symboles sont exportés pour un appel depuis du C.
-; Chaque fonction respecte l'ABI : pile 16‑octets alignée avant tout CALL,
-; RBX (registre callee‑saved) est sauvegardé/restauré dès qu'il est modifié.
-;
-; my_getchar – lit 1 octet sur stdin, retourne AL étendu en RAX ; sinon exit 5.
-; my_putchar – écrit le caractère DIL sur stdout.
-; my_getint  – lit « [+|-]?[0‑9]+ », séparé par espace ou saut de ligne, retourne RAX.
-; my_putint  – affiche l'entier signé passé dans RDI.
-;--------------------------------------------------------------------------
-
-section .text
-
-; ————————————————————————————————————————————————————————————
-; exports
-
-global my_putchar
-global my_getchar
-global my_getint
-global my_putint
-
 ; ————————————————————————————————————————————————————————————
 ; void my_putchar(char c)
 ;————————————————————————————————————————————————————————————
