@@ -64,7 +64,7 @@ char text(char t){
 void print(int s){
 }
 
-void bool(int a, int b){
+int bool(int a, int b){
     if (a == b && a == 0){
         return 0;
     }

@@ -70,31 +70,9 @@ const char* exprType(Node *node,
     if (node->label[0]=='\'' && node->label[strlen(node->label)-1]=='\'')
         return "char";
 
-    if (strcmp(node->label, "Call")==0 && node->firstChild) {
-        const char *fn_name = node->firstChild->label;
-        const Symbole *sym = lookupSymbol(g, l, fn_name);
-        if (!sym) {
-            return NULL;
-        }
-        if (!sym->isFunction) {
-            fprintf(stderr,
-                "error (line %d): '%s' is not a function\n",
-                node->lineno, fn_name);
-            sem_error = 2;
-            return NULL;
-        }
-        if (strcmp(sym->type, "void")==0) {
-            fprintf(stderr,
-                "error (line %d): void function '%s' used in expression\n",
-                node->lineno, fn_name);
-            sem_error = 2;
-        }
-        return sym->type;
-    }
-
     if (node->firstChild==NULL && isalpha(node->label[0])) {
         const char *t = lookupType(g, l, node->label);
-        return t ? t : "unknown";
+        return t ? t : "void";
     }
 
     if (!strcmp(node->label,"AddSub") ||
@@ -178,7 +156,7 @@ static void checkReturnsInSubtree(Node *n,
     if (strcmp(n->label, "Return") == 0) {
         *hasReturn = 1;
         if (n->firstChild) {
-            const char *actualType = exprType(n->firstChild, global, local);
+            const char *actualType = strcmp(n->firstChild->label, "Ident") == 0 ? lookupType(global, local, n->firstChild->value) : exprType(n->firstChild, global, local);
             if (strcmp(expectedType, "char") == 0 && strcmp(actualType, "int") == 0) {
                 fprintf(stderr,
                     "warning (line %d): return from ‘int’ to ‘char’ may lose data\n",
@@ -187,7 +165,7 @@ static void checkReturnsInSubtree(Node *n,
                 fprintf(stderr,
                     "error (line %d): return type ‘%s’ does not match function return type ‘%s’\n",
                     n->lineno,
-                    actualType ? actualType : "unknown",
+                    actualType ? actualType : "void",
                     expectedType);
                 sem_error = 2;
             }
