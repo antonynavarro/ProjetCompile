@@ -37,11 +37,14 @@ void verifyIdentifiers(Node *node,
                        const TableSymbole *local)
 {
     if (!node) return;
-    
-    printf("verifyIdentifiers: %s\n", node->label);
+
+    const TableSymbole *curLocal = local;
+    if (strcmp(node->label, "Function") == 0 && node->localTable) {
+        curLocal = node->localTable;
+    }
 
     if (strcmp(node->label, "Ident") == 0) {
-        if (!lookupSymbol(global, local, node->value)) {
+        if (!lookupSymbol(global, curLocal, node->value)) {
             fprintf(stderr,
                 "error (line %d): identifier '%s' not declared\n",
                 node->lineno, node->value);
@@ -49,7 +52,7 @@ void verifyIdentifiers(Node *node,
         }
     }
 
-    verifyIdentifiers(node->firstChild, global, local);
+    verifyIdentifiers(node->firstChild, global, curLocal);
     verifyIdentifiers(node->nextSibling, global, local);
 }
 
