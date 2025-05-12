@@ -20,7 +20,7 @@ void translate(Node* root, bool show) {
     if (show) {printAllLocalSymbolTables(root);}
 
 
-    verifyIdentifiers(root, &globalTable, NULL);
+    //verifyIdentifiers(root, &globalTable, NULL);
     verifyMainExists(&globalTable); // <- après la table des symboles
     verifyReturns(root, &globalTable);
     checkAssignments(root, &globalTable, NULL);
