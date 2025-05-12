@@ -43,13 +43,11 @@ void verifyIdentifiers(Node *node,
         curLocal = node->localTable;
     }
 
-    if (strcmp(node->label, "Ident") == 0) {
-        if (!lookupSymbol(global, curLocal, node->value)) {
-            fprintf(stderr,
-                "error (line %d): identifier '%s' not declared\n",
-                node->lineno, node->value);
-            sem_error = 2;
-        }
+    if (strcmp(node->label, "Ident") == 0 && !lookupSymbol(global, curLocal, node->value)) {
+        fprintf(stderr,
+            "error (line %d): identifier '%s' not declared\n",
+            node->lineno, node->value);
+        sem_error = 2;
     }
 
     verifyIdentifiers(node->firstChild, global, curLocal);
@@ -189,8 +187,9 @@ void verifyReturns(Node *node, const TableSymbole *global) {
 
         if (strcmp(expectedType, "void") != 0 && !hasReturn) {
             fprintf(stderr,
-                "error: function '%s' with non-void return type must return a value\n",
-                node->firstChild->label);
+                "error (line %d): function '%s' with non-void return type must return a value\n",
+                node->lineno,
+                FIRSTCHILD(node->firstChild)->nextSibling->label);
             sem_error = 2;
         }
 
