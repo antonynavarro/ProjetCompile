@@ -10,14 +10,14 @@ extern int sem_error;
 
 typedef enum { GLOBAL, LOCAL } Scope;
 
-
 typedef struct {
   char ident[MAX_IDENT_LEN];
   char type[50];                                           
   Scope scope;
   int address;   
   int isFunction;
-  int isStatic;           
+  int isStatic;
+  int isParam;           
 } Symbole;
 
 
@@ -27,9 +27,9 @@ typedef struct TableSymbole {
 } TableSymbole;
 
 int  identExiste(const TableSymbole*, const char*);
-void addSymbol(TableSymbole*, const char*, const char*, Scope, int address, int isFunction, int isStatic);
+void addSymbol(TableSymbole*, const char*, const char*, Scope, int address, int isFunction, int isStatic, int isParam);
 void generateGlobalSymbolTable(Node*, TableSymbole*);
-void generateLocalSymbolTable(Node*, TableSymbole*);
+void generateLocalSymbolTable(Node*);
 void printSymbolTable(TableSymbole* table);
 void printAllLocalSymbolTables(Node *node);
 

@@ -54,6 +54,34 @@ void verifyIdentifiers(Node *node,
     verifyIdentifiers(node->nextSibling, global, local);
 }
 
+void verifyFucntions(Node *node, 
+                    const TableSymbole *global,
+                    const TableSymbole *local)
+{
+    if (!node) return;
+
+    if (strcmp(node->label, "Ident") == 0 && lookupSymbol(global, local, node->value)->isFunction) {
+        Node *functionChild = node->firstChild;
+        Symbole *syms = node->localTable->symb;
+        if (strcmp(functionChild->label, "Args") == 0) {
+            functionChild = functionChild->firstChild;
+            while (functionChild) {
+                const char *argType = lookupType(global, local, functionChild->label);
+                if (!argType) {
+                    fprintf(stderr,
+                        "error (line %d): argument '%s' not declared\n",
+                        node->lineno, functionChild->label);
+                    sem_error = 2;
+                }
+                functionChild = functionChild->nextSibling;
+            }
+        }
+    }
+
+    verifyFucntions(node->firstChild, global, local);
+    verifyFucntions(node->nextSibling, global, local);
+}
+
 /* Calcule le type d’une expression. */
 const char* exprType(Node *node,
                      const TableSymbole *g,

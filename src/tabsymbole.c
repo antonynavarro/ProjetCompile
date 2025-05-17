@@ -25,7 +25,7 @@ int identExisteDansScope(const TableSymbole* table, const char* ident, Scope sco
     return 0;
 }
 
-void addSymbol(TableSymbole* table, const char* ident, const char* type, Scope scope, int address, int isFunction, int isStatic) {
+void addSymbol(TableSymbole* table, const char* ident, const char* type, Scope scope, int address, int isFunction, int isStatic, int isParam) {
     if (identExiste(table, ident)) {
         fprintf(stderr,
                 "Erreur sémantique : \"%s\" déjà déclaré\n", ident);
@@ -45,6 +45,7 @@ void addSymbol(TableSymbole* table, const char* ident, const char* type, Scope s
     table->symb[table->count].address = address;
     table->symb[table->count].isFunction = isFunction;
     table->symb[table->count].isStatic = isStatic;
+    table->symb[table->count].isParam = isParam;
     table->count++;
 }
 
@@ -62,7 +63,7 @@ void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
                         "Erreur sémantique : Conflit nom global/fonction pour \"%s\"\n", fn_name);
                 sem_error = 2;
             } else {
-                addSymbol(table, fn_name, fn_type, GLOBAL, 0, 1, 0);
+                addSymbol(table, fn_name, fn_type, GLOBAL, 0, 1, 0, 0);
             }
         }
     }
@@ -82,7 +83,7 @@ void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
                             "Erreur sémantique : Variable globale \"%s\" redéclarée\n", var->label);
                     sem_error = 2;
                 } else {
-                    addSymbol(table, var->value, decl->label, GLOBAL, offset, 0, 0);
+                    addSymbol(table, var->value, decl->label, GLOBAL, offset, 0, 0, 0);
                     offset += size;
                 }
             }
@@ -95,7 +96,7 @@ void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
 }
 
 
-void generateLocalSymbolTable(Node *node, TableSymbole* table) {
+void generateLocalSymbolTable(Node *node) {
     if (!node) return;
 
     if (strcmp(node->label, "Function") == 0) {
@@ -118,7 +119,7 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
                                 "Erreur sémantique : Conflit paramètre/variable locale \"%s\"\n", paramTypeNode->firstChild->label);
                         sem_error = 2;
                     }
-                    addSymbol(local, paramTypeNode->firstChild->value, paramTypeNode->label, LOCAL, 0, 0, 0);
+                    addSymbol(local, paramTypeNode->firstChild->value, paramTypeNode->label, LOCAL, 0, 0, 0, 1);
                 }
                 paramTypeNode = paramTypeNode->nextSibling;
             }
@@ -139,7 +140,7 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
                                     "Erreur sémantique : Conflit paramètre/variable locale \"%s\"\n", identNode->value);
                                 sem_error = 2;
                             }
-                            addSymbol(local, identNode->value, typeNode->label, LOCAL, 0, 0, strcmp(varTypeNode->label, "Static") == 0);
+                            addSymbol(local, identNode->value, typeNode->label, LOCAL, 0, 0, strcmp(varTypeNode->label, "Static") == 0, 0);
                             identNode = identNode->nextSibling;
                         }
                         if (strcmp(varTypeNode->label, "Static") == 0) {
@@ -155,16 +156,18 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
         }
     }
 
-    generateLocalSymbolTable(node->firstChild, table);
-    generateLocalSymbolTable(node->nextSibling, table);
+    generateLocalSymbolTable(node->firstChild);
+    generateLocalSymbolTable(node->nextSibling);
 }
 
 void printSymbolTable(TableSymbole* table) {
     for (int i = 0; i < table->count; i++) {
-        printf("Nom: %s, Type: %s, Portée: %s, Adresse: %d\n",
+        printf("Nom: %s, Type: %s, Portée: %s, Statique: %s, Paramètre: %s, Adresse: %d\n",
                table->symb[i].ident,
                table->symb[i].type,
                (table->symb[i].scope == GLOBAL) ? "Global" : "Local",
+               table->symb[i].isStatic ? "Oui" : "Non",
+               table->symb[i].isParam ? "Oui" : "Non",
                table->symb[i].address);
     }
 }
