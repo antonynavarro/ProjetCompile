@@ -31,6 +31,30 @@ const char* lookupType(const TableSymbole *g,
     return sym ? sym->type : NULL;
 }
 
+/* Retourne la table des symboles d'une fonction ou NULL sinon */
+TableSymbole* lookupLocalTable(Node *node, const char *ident)
+{
+    if (!node) return NULL;
+
+    if (strcmp(node->label, "Functions") == 0) {
+
+        Node *functionNode = node->firstChild;
+        while (functionNode) {
+           
+            if (functionNode->localTable && strcmp(functionNode->firstChild->firstChild->nextSibling->label, ident) == 0) {
+                return functionNode->localTable;
+            }
+
+            functionNode = functionNode->nextSibling;
+        }
+
+        return NULL;
+    }
+    
+    TableSymbole *localTable = lookupLocalTable(node->firstChild, ident);
+    return localTable ? localTable : lookupLocalTable(node->nextSibling, ident);
+}
+
 /* Vérifie que tous les identifiants sont déclarés avant utilisation. */
 void verifyIdentifiers(Node *node,
                        const TableSymbole *global,
@@ -54,32 +78,86 @@ void verifyIdentifiers(Node *node,
     verifyIdentifiers(node->nextSibling, global, local);
 }
 
-void verifyFucntions(Node *node, 
-                    const TableSymbole *global,
-                    const TableSymbole *local)
+/* Vérifie que toutes les fonctions utilisent les bons paramètres. */
+void verifyFucntions(Node *node,
+                     Node *root, 
+                     const TableSymbole *global)
 {
     if (!node) return;
 
-    if (strcmp(node->label, "Ident") == 0 && lookupSymbol(global, local, node->value)->isFunction) {
+    const Symbole *sym = NULL;
+
+    if (strcmp(node->label, "Ident") == 0 && (sym = lookupSymbol(global, NULL, node->value)) && sym->isFunction) {
+
         Node *functionChild = node->firstChild;
-        Symbole *syms = node->localTable->symb;
-        if (strcmp(functionChild->label, "Args") == 0) {
+        TableSymbole *local = lookupLocalTable(root, node->value);
+
+        if (!local) {
+            fprintf(stderr,
+                "error (line %d): function '%s' not declared\n",
+                node->lineno, node->value);
+            sem_error = 2;
+            return;
+        }
+
+        if (local->count == 0 && functionChild) {
+            fprintf(stderr,
+                "error (line %d): function '%s' too many arguments\n",
+                node->lineno, node->value);
+            sem_error = 2;
+            return;
+        }
+
+        if (functionChild && strcmp(functionChild->label, "Args") == 0) {
+
             functionChild = functionChild->firstChild;
-            while (functionChild) {
-                const char *argType = lookupType(global, local, functionChild->label);
+            for (int i = 0; i < local->count - 1; i++) {
+                
+                if (!functionChild) {
+                    fprintf(stderr,
+                        "error (line %d): function '%s' too few arguments\n",
+                        node->lineno, node->value);
+                    sem_error = 2;
+                    return;
+                }
+
+                const char *argType = lookupType(global, local, functionChild->value);
+
                 if (!argType) {
                     fprintf(stderr,
                         "error (line %d): argument '%s' not declared\n",
                         node->lineno, functionChild->label);
                     sem_error = 2;
+                    return;
                 }
+
+                if (strcmp(local->symb[i].type, argType) != 0) {
+                    fprintf(stderr,
+                        "error (line %d): argument '%s' type mismatch (need '%s'/got '%s'\n",
+                        node->lineno, 
+                        functionChild->label,
+                        local->symb[i].type,
+                        argType);
+                    sem_error = 2;
+                    return;
+                }
+
                 functionChild = functionChild->nextSibling;
             }
+
+            if (functionChild) {
+                fprintf(stderr,
+                    "error (line %d): function '%s' too many arguments\n",
+                    node->lineno, node->value);
+                sem_error = 2;
+                return;
+            }
+
         }
     }
 
-    verifyFucntions(node->firstChild, global, local);
-    verifyFucntions(node->nextSibling, global, local);
+    verifyFucntions(node->firstChild, root, global);
+    verifyFucntions(node->nextSibling, root, global);
 }
 
 /* Calcule le type d’une expression. */

@@ -23,6 +23,7 @@ void translate(Node* root, bool show) {
     addSymbol(&globalTable, "putint", "void", GLOBAL, 0, 1, 0, 0);
 
     verifyIdentifiers(root, &globalTable, NULL);
+    //verifyFucntions(root, root, &globalTable);
     verifyMainExists(&globalTable);
     verifyReturns(root, &globalTable);
     checkAssignments(root, &globalTable, NULL);

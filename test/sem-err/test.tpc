@@ -17,6 +17,7 @@ int main (void) {
             return 1;
         }
     }
+    a = 'c';
     b = 1;
     c = aled(a, b);
     oskour();
