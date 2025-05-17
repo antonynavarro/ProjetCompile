@@ -25,6 +25,14 @@ int identExisteDansScope(const TableSymbole* table, const char* ident, Scope sco
     return 0;
 }
 
+void addFun(TableSymbole* table){
+    addSymbol(table, "getint",    "int", GLOBAL, 0, 1);
+    addSymbol(table, "putint",    "void",GLOBAL, 0, 1);
+    addSymbol(table, "getchar",   "char",GLOBAL, 0, 1);
+    addSymbol(table, "putchar",   "void",GLOBAL, 0, 1);
+
+}
+
 void addSymbol(TableSymbole* table, const char* ident, const char* type, Scope scope, int address, int isFunction) {
     if (identExiste(table, ident)) {
         fprintf(stderr,
@@ -94,53 +102,110 @@ void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
 }
 
 
-void generateLocalSymbolTable(Node *node, TableSymbole* table) {
+void calculateLocalVariableAddresses(TableSymbole* localTable) {
+    int currentOffset = 0;
+    
+    // First, process parameters (if needed)
+    for (int i = 0; i < localTable->count; i++) {
+        if (localTable->symb[i].isFunction == 0) {
+            size_t varSize;
+            
+            // Determine variable size based on type
+            if (strcmp(localTable->symb[i].type, "int") == 0) {
+                varSize = 8;  // 64-bit integer
+            } else if (strcmp(localTable->symb[i].type, "char") == 0) {
+                varSize = 1;  // 8-bit character
+            } else {
+                // Default to 8 bytes for unknown types
+                varSize = 8;
+            }
+            
+            // Align to 8-byte boundary
+            currentOffset = (currentOffset + 7) & ~7;
+            
+            // Assign negative offset from rbp
+            localTable->symb[i].address = -currentOffset - varSize;
+            
+            // Increment offset
+            currentOffset += varSize;
+        }
+    }
+    
+    // Ensure total space is a multiple of 16 for stack alignment
+    currentOffset = (currentOffset + 15) & ~15;
+}
+
+void generateLocalSymbolTable(Node *node, TableSymbole* globalTable) {
     if (!node) return;
 
     if (strcmp(node->label, "Function") == 0) {
         Node *head = node->firstChild;
         Node *body = head->nextSibling;
 
-        // Création d'une nouvelle table locale
+        // Create a new local symbol table
         TableSymbole *local = malloc(sizeof(TableSymbole));
         local->count = 0;
-        node->localTable = local; // Attache la table a ce nœud de fonction
+        node->localTable = local; // Attach table to this function node
 
-        // Ajouter les paramètres
+        // Add parameters
         Node *paramNode = head->firstChild->nextSibling->nextSibling;
         if (paramNode && strcmp(paramNode->label, "Parameter") == 0) {
             Node *paramTypeNode = paramNode->firstChild;
             while (paramTypeNode) {
                 if (paramTypeNode->firstChild) {
+                    // Check for parameter conflicts
                     if (identExiste(local, paramTypeNode->firstChild->value)) {
                         fprintf(stderr,
-                                "Erreur sémantique : Conflit paramètre/variable locale \"%s\"\n", paramTypeNode->firstChild->label);
+                                "Semantic Error: Parameter conflict \"%s\"\n", 
+                                paramTypeNode->firstChild->label);
                         sem_error = 2;
                     }
-                    addSymbol(local, paramTypeNode->firstChild->value, paramTypeNode->label, LOCAL, 0,0);
+                    
+                    // Add parameter to local symbol table
+                    addSymbol(local, 
+                              paramTypeNode->firstChild->value, 
+                              paramTypeNode->label, 
+                              LOCAL, 
+                              0,  // Temporary address, will be updated later
+                              0); // Not a function
                 }
                 paramTypeNode = paramTypeNode->nextSibling;
             }
         }
 
-        // Ajouter les variables locales
+        // Add local variables
         if (body && strcmp(body->label, "Body") == 0) {
             Node *varNode = body->firstChild;
             while (varNode) {
                 if (strcmp(varNode->label, "Vars") == 0 && varNode->firstChild) {
                     Node *varTypeNode = varNode->firstChild;
-                    Node *typeNode = strcmp(varTypeNode->label, "Static") == 0 ? varNode->firstChild->firstChild : varNode->firstChild;
+                    Node *typeNode = strcmp(varTypeNode->label, "Static") == 0 
+                        ? varNode->firstChild->firstChild 
+                        : varNode->firstChild;
+                    
                     while (typeNode) {
                         Node *identNode = typeNode->firstChild;
                         while (identNode) {
-                            if (identNode && identExiste(local, identNode->value)) {
+                            // Check for local variable conflicts
+                            if (identExiste(local, identNode->value)) {
                                 fprintf(stderr,
-                                    "Erreur sémantique : Conflit paramètre/variable locale \"%s\"\n", identNode->value);
+                                    "Semantic Error: Local variable conflict \"%s\"\n", 
+                                    identNode->value);
                                 sem_error = 2;
                             }
-                            addSymbol(local, identNode->value, typeNode->label, LOCAL, 0,0);
+                            
+                            // Add local variable to symbol table
+                            addSymbol(local, 
+                                      identNode->value, 
+                                      typeNode->label, 
+                                      LOCAL, 
+                                      0,  // Temporary address, will be updated later
+                                      0); // Not a function
+                            
                             identNode = identNode->nextSibling;
                         }
+                        
+                        // Handle static and non-static type nodes
                         if (strcmp(varTypeNode->label, "Static") == 0) {
                             varTypeNode = varTypeNode->nextSibling;
                             typeNode = varTypeNode ? varTypeNode->firstChild : NULL;
@@ -152,11 +217,17 @@ void generateLocalSymbolTable(Node *node, TableSymbole* table) {
                 varNode = varNode->nextSibling;
             }
         }
+
+        // Calculate addresses for local variables
+        calculateLocalVariableAddresses(local);
     }
 
-    generateLocalSymbolTable(node->firstChild, table);
-    generateLocalSymbolTable(node->nextSibling, table);
+    // Recursive traversal
+    generateLocalSymbolTable(node->firstChild, globalTable);
+    generateLocalSymbolTable(node->nextSibling, globalTable);
 }
+
+
 
 void printSymbolTable(TableSymbole* table) {
     for (int i = 0; i < table->count; i++) {

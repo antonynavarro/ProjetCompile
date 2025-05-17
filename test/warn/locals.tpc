@@ -1,0 +1,73 @@
+// test_locals_io_extended.tpc
+// 1) testLocals() + addition
+// 2) getint()/putint() lecture de positif et négatif
+// 3) identity(a)
+// 4) manipulation des globals globy/gloaba
+// 5) getchar()/putchar()
+// 6) appel à une fonction à 2 arguments (exemple add2)
+
+int globy;
+char gloaba;
+
+// renvoie testLocals + 15
+int testLocals(void) {
+    int x;
+    int y;
+    x = 10;
+    y = x;
+    return y;
+}
+
+int identity(int a) {
+    return a;
+}
+
+int add2(int a, int b) {
+    return a + b;
+}
+
+int main(void) {
+    int a, b, result;
+    char c;
+
+    // 1) testLocals + 15 → 10 + 15 = 25
+    result = testLocals() + 15;
+    putint(result); putchar(10);
+
+    // 2a) getint positive
+    // Entrée attendue : 42
+    a = getint();
+    result = identity(a);
+    putint(result); putchar(10);
+
+    // 2b) getint négatif
+    // Entrée attendue : -7
+    a = getint();
+    result = identity(a);
+    putint(result); putchar(10);
+
+    // 3) test identity sur zéro
+    result = identity(0);
+    putint(result); putchar(10);
+
+    // 4) variables globales
+    globy = 1234;
+    gloaba = 'Z';
+    putint(globy); putchar(10);
+    putchar(gloaba); putchar(10);
+
+    // 5) getchar()/putchar(): recopier un caractère
+    // Lecture d’un caractère, recopie immédiate puis LF
+    c = getchar();
+    putchar(c); putchar(10);
+
+    // 6) appel d’une fonction à 2 arguments
+    // Vérifie le passage de >1 paramètre
+    a = 5; b = 17;
+    result = add2(a, b); // devrait faire 22
+    putint(result); putchar(10);
+
+    return 0;
+}
+
+
