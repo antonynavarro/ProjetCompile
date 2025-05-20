@@ -1,4 +1,4 @@
-void order(void){
+int main(void){
     int a, b, c, d, e, f;
     a = 10;
     b = a + 10;
@@ -6,4 +6,5 @@ void order(void){
     d = a > b;
     e = a <= b;
     f = a >= b;
+    return 0;
 }

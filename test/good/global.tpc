@@ -4,4 +4,5 @@ int MAX, MIN;
 char TEXT, FILE;
 
 int main(void){
+    return 0;
 }

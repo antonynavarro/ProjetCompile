@@ -16,7 +16,7 @@ int main(void) {
     int sum, x, y;
     x = 10;
     y = 20;
-    sum = add(x, y);
+    sum = add(add(x,y), y);
     printResult(sum);
     return 0;
 }

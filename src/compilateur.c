@@ -9,6 +9,11 @@ void translate(Node* root, bool show) {
 	
     TableSymbole globalTable = {.count = 0};
 
+    addSymbol(&globalTable, "getchar", "char", GLOBAL, 0, 1, 0, 0);
+    addSymbol(&globalTable, "putchar", "void", GLOBAL, 0, 1, 0, 0);
+    addSymbol(&globalTable, "getint", "int", GLOBAL, 0, 1, 0, 0);
+    addSymbol(&globalTable, "putint", "void", GLOBAL, 0, 1, 0, 0);
+
     //table des variables globales
     generateGlobalSymbolTable(root, &globalTable);
     if (show) {printSymbolTable(&globalTable);}
@@ -17,13 +22,8 @@ void translate(Node* root, bool show) {
     generateLocalSymbolTable(root);
     if (show) {printAllLocalSymbolTables(root);}
 
-    addSymbol(&globalTable, "getchar", "char", GLOBAL, 0, 1, 0, 0);
-    addSymbol(&globalTable, "putchar", "void", GLOBAL, 0, 1, 0, 0);
-    addSymbol(&globalTable, "getint", "int", GLOBAL, 0, 1, 0, 0);
-    addSymbol(&globalTable, "putint", "void", GLOBAL, 0, 1, 0, 0);
-
     verifyIdentifiers(root, &globalTable, NULL);
-    //verifyFunctions(root, root, &globalTable);
+    //verifyFunctions(root, root, &globalTable, NULL);
     verifyMainExists(&globalTable);
     verifyReturns(root, &globalTable);
     checkAssignments(root, &globalTable, NULL);

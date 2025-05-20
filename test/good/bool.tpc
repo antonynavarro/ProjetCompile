@@ -1,4 +1,4 @@
-void bool(int a, int b){
+int bool(int a, int b){
     if (a == b && a == 0){
         return 0;
     }
@@ -6,4 +6,11 @@ void bool(int a, int b){
         return a;
     }
     return b;
+}
+
+int main(void){
+    int a, b;
+    a = 1;
+    b = 2;
+    return bool(a, b);
 }

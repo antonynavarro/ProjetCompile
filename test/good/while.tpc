@@ -1,0 +1,18 @@
+int main(void) {
+    int i, j, count;
+    i = 0;
+    count = 0;
+    while (i < 3) {
+        j = 0;
+        while (j < 2) {
+            if (j == 1) {
+                count = count + 2;
+            } else {
+                count = count + 1;
+            }
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+    return count;
+}

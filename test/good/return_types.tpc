@@ -1,0 +1,23 @@
+void print_hello(void) {
+}
+
+int add(int a, int b) {
+    return a + b;
+}
+
+char getA(void) {
+    return 'A';
+}
+
+int foo(void){
+    return 'a';
+}
+
+int main(void) {
+    int x;
+    char c;
+    print_hello();
+    x = add(2, 1);
+    c = getA();
+    return x;
+}

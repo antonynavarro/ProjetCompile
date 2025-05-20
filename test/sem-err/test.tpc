@@ -22,5 +22,5 @@ int main (void) {
     b = 1;
     c = aled(a, b);
     oskour();
-    return c;
+    return !a;
 }
