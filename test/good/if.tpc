@@ -1,15 +1,194 @@
-int main(void){
-    int a, b;
-    a = 10;
-    b = 2;
-    if (a == b){
-        a = a + b;
+int main(void) {
+    int a;
+    int b;
+    int c;
+    a = 5;
+    b = 10;
+    c = 5;
+    
+    // ---- Test de l'égalité (==) ----
+    if (a == a) {
+        putint(1);  // Devrait afficher 1 (vrai)
+    } else {
+        putint(0);
     }
-    if (a - b == 0){
-        a = 0;
+    putchar(10); // Saut de ligne
+    
+    if (a == c) {
+        putint(1);  // Devrait afficher 1 (vrai)
+    } else {
+        putint(0);
     }
-    else {
-        b = 0;
+    putchar(10); // Saut de ligne
+    
+    if (a == b) {
+        putint(0);
+    } else {
+        putint(1);  // Devrait afficher 1 (faux)
     }
+    putchar(10); // Saut de ligne
+    
+    // ---- Test de l'inégalité (!=) ----
+    if (a != b) {
+        putint(1);  // Devrait afficher 1 (vrai)
+    } else {
+        putint(0);
+    }
+    putchar(10); // Saut de ligne
+    
+    if (a != c) {
+        putint(0);
+    } else {
+        putint(1);  // Devrait afficher 1 (faux)
+    }
+    putchar(10); // Saut de ligne
+    
+    // ---- Test inférieur à (<) ----
+    if (a < b) {
+        putint(1);  // Devrait afficher 1 (vrai)
+    } else {
+        putint(0);
+    }
+    putchar(10); // Saut de ligne
+    
+    if (b < a) {
+        putint(0);
+    } else {
+        putint(1);  // Devrait afficher 1 (faux)
+    }
+    putchar(10); // Saut de ligne
+    
+    if (a < c) {
+        putint(0);
+    } else {
+        putint(1);  // Devrait afficher 1 (faux)
+    }
+    putchar(10); // Saut de ligne
+    
+    // ---- Test supérieur à (>) ----
+    if (b > a) {
+        putint(1);  // Devrait afficher 1 (vrai)
+    } else {
+        putint(0);
+    }
+    putchar(10); // Saut de ligne
+    
+    if (a > b) {
+        putint(0);
+    } else {
+        putint(1);  // Devrait afficher 1 (faux)
+    }
+    putchar(10); // Saut de ligne
+    
+    if (a > c) {
+        putint(0);
+    } else {
+        putint(1);  // Devrait afficher 1 (faux)
+    }
+    putchar(10); // Saut de ligne
+    
+    // ---- Test inférieur ou égal (<=) ----
+    if (a <= b) {
+        putint(1);  // Devrait afficher 1 (vrai)
+    } else {
+        putint(0);
+    }
+    putchar(10); // Saut de ligne
+    
+    if (a <= c) {
+        putint(1);  // Devrait afficher 1 (vrai)
+    } else {
+        putint(0);
+    }
+    putchar(10); // Saut de ligne
+    
+    if (b <= a) {
+        putint(0);
+    } else {
+        putint(1);  // Devrait afficher 1 (faux)
+    }
+    putchar(10); // Saut de ligne
+    
+    // ---- Test supérieur ou égal (>=) ----
+    if (b >= a) {
+        putint(1);  // Devrait afficher 1 (vrai)
+    } else {
+        putint(0);
+    }
+    putchar(10); // Saut de ligne
+    
+    if (a >= c) {
+        putint(1);  // Devrait afficher 1 (vrai)
+    } else {
+        putint(0);
+    }
+    putchar(10); // Saut de ligne
+    
+    if (a >= b) {
+        putint(0);
+    } else {
+        putint(1);  // Devrait afficher 1 (faux)
+    }
+    putchar(10); // Saut de ligne
+    
+    // ---- Test opérateur ET logique (&&) ----
+    if (a == c && b > a) {
+        putint(1);  // Devrait afficher 1 (vrai && vrai)
+    } else {
+        putint(0);
+    }
+    putchar(10); // Saut de ligne
+    
+    if (a == c && a > b) {
+        putint(0);
+    } else {
+        putint(1);  // Devrait afficher 1 (vrai && faux)
+    }
+    putchar(10); // Saut de ligne
+    
+    if (a == b && b > a) {
+        putint(0);
+    } else {
+        putint(1);  // Devrait afficher 1 (faux && vrai)
+    }
+    putchar(10); // Saut de ligne
+    
+    // ---- Test opérateur OU logique (||) ----
+    if (a == c || b > a) {
+        putint(1);  // Devrait afficher 1 (vrai || vrai)
+    } else {
+        putint(0);
+    }
+    putchar(10); // Saut de ligne
+    
+    if (a == c || a > b) {
+        putint(1);  // Devrait afficher 1 (vrai || faux)
+    } else {
+        putint(0);
+    }
+    putchar(10); // Saut de ligne
+    
+    if (a == b || b > a) {
+        putint(1);  // Devrait afficher 1 (faux || vrai)
+    } else {
+        putint(0);
+    }
+    putchar(10); // Saut de ligne
+    
+    if (a == b || a > b) {
+        putint(0);
+    } else {
+        putint(1);  // Devrait afficher 1 (faux || faux)
+    }
+    putchar(10); // Saut de ligne
+    
+    // ---- Test complexe avec des parenthèses ----
+    if ((a == c && b > a) || (a < b && c >= a)) {
+        putint(1);  // Devrait afficher 1
+    } else {
+        putint(0);
+    }
+    putchar(10); // Saut de ligne
+    
     return 0;
 }

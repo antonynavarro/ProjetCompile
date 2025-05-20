@@ -262,7 +262,10 @@ F   :  ADDSUB F {
             $$->value = $1;
             addChild($$, $2);
         }
-    |  '!' F { $$ = $2; }
+    |  '!' F { 
+            $$ = makeNode("Not");
+            addChild($$, $2); 
+            }
     |  '(' Exp ')' { $$ = $2; }
     |  NUM { 
             char str[50];

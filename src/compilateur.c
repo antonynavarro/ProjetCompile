@@ -10,7 +10,7 @@ void translate(Node* root, bool show) {
     TableSymbole globalTable = {.count = 0};
 
     //table des variables globales
-    addFun(&globalTable);
+    //addFun(&globalTable);
     generateGlobalSymbolTable(root, &globalTable);
     if (show) {printSymbolTable(&globalTable);}
 
