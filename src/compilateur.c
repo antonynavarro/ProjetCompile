@@ -23,12 +23,16 @@ void translate(Node* root, bool show) {
     addSymbol(&globalTable, "putint", "void", GLOBAL, 0, 1, 0, 0);
 
     verifyIdentifiers(root, &globalTable, NULL);
-    //verifyFucntions(root, root, &globalTable);
+    //verifyFunctions(root, root, &globalTable);
     verifyMainExists(&globalTable);
     verifyReturns(root, &globalTable);
     checkAssignments(root, &globalTable, NULL);
 
 
+    if (sem_error == 2) {
+        fprintf(stderr, "Compilation failed due to semantic errors.\n");
+        return;
+    }
 
     FILE *out = fopen("_anonymous.asm", "w");
     if (!out) {

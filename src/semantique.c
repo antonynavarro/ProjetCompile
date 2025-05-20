@@ -79,7 +79,7 @@ void verifyIdentifiers(Node *node,
 }
 
 /* Vérifie que toutes les fonctions utilisent les bons paramètres. */
-void verifyFucntions(Node *node,
+void verifyFunctions(Node *node,
                      Node *root, 
                      const TableSymbole *global)
 {
@@ -108,10 +108,21 @@ void verifyFucntions(Node *node,
             return;
         }
 
+        int count = 0;
+        for (int i = 0; i < local->count; i++) {
+            if (local->symb[i].isParam) {
+                count++;
+            }
+        }
+
+        fprintf(stderr,
+            "debug: function '%s' has %d parameters\n",
+            node->value, count);
+
         if (functionChild && strcmp(functionChild->label, "Args") == 0) {
 
             functionChild = functionChild->firstChild;
-            for (int i = 0; i < local->count - 1; i++) {
+            for (int i = 0; i < count; i++) {
                 
                 if (!functionChild) {
                     fprintf(stderr,
@@ -156,8 +167,8 @@ void verifyFucntions(Node *node,
         }
     }
 
-    verifyFucntions(node->firstChild, root, global);
-    verifyFucntions(node->nextSibling, root, global);
+    verifyFunctions(node->firstChild, root, global);
+    verifyFunctions(node->nextSibling, root, global);
 }
 
 /* Calcule le type d’une expression. */

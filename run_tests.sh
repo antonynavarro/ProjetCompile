@@ -1,61 +1,87 @@
 #!/bin/bash
 
-# Répertoires des tests
+# Répertoire principal
 TEST_DIR="test"
-GOOD_TESTS="$TEST_DIR/good"
-ERR_TESTS="$TEST_DIR/syn-err"
 
-# Variables de suivi
+# Variables de suivi global
+total_pass=0
+total_tests=0
 good_pass=0
-good_total=0
-err_pass=0
-err_total=0
+good_tests=0
+syn_err_pass=0
+syn_err_tests=0
+sem_err_pass=0
+sem_err_tests=0
+warn_pass=0
+warn_tests=0
 
-# Test des programmes corrects
-echo "=== TESTS DES PROGRAMMES CORRECTS ==="
-for file in "$GOOD_TESTS"/*.tpc; do
-    if [[ -f "$file" ]]; then
-        ((good_total++))
+# Assoc pour stocker les stats par dossier
+declare -A pass_counts
+declare -A total_counts
+
+# Fonction pour déterminer le code attendu selon le nom du dossier
+get_expected_code() {
+    case "$1" in
+        good) echo 0 ;;
+        syn-err) echo 1 ;;
+        sem-err) echo 2 ;;
+        warn) echo 0 ;;
+        *) echo 99 ;;  # Inconnu
+    esac
+}
+
+# Fonction pour tester un répertoire
+test_directory() {
+    local dir_path=$1
+    local dir_name
+    dir_name=$(basename "$dir_path")
+    local expected_status
+    expected_status=$(get_expected_code "$dir_name")
+
+    echo ""
+    echo "=== TESTS DANS $dir_name ($dir_path) ==="
+    local pass=0
+    local total=0
+
+    for file in "$dir_path"/*.tpc; do
+        [[ -f "$file" ]] || continue
+        ((total++))
         echo -n "Test $file : "
-        
+
         ./bin/tpcc < "$file" > /dev/null 2>&1
         status=$?
 
-        # Vérifier le code de retour attendu
-        if [[ $status -eq 0 ]]; then
+        if [[ $status -eq $expected_status ]]; then
             echo "[OK]"
-            ((good_pass++))
+            ((pass++))
         else
-            echo "[FAIL] (Code retour : $status)"
+            echo "[FAIL] (Code retour : $status, attendu : $expected_status)"
         fi
-    fi
+    done
+
+    pass_counts["$dir_name"]=$pass
+    total_counts["$dir_name"]=$total
+
+    ((total_pass+=pass))
+    ((total_tests+=total))
+
+    echo "==> Résultat $dir_name : $pass / $total"
+}
+
+# Parcourir tous les sous-dossiers de TEST_DIR
+for dir in "$TEST_DIR"/*; do
+    [[ -d "$dir" ]] || continue
+    test_directory "$dir"
 done
 
-# Test des programmes incorrects
-echo "=== TESTS DES PROGRAMMES INCORRECTS ==="
-for file in "$ERR_TESTS"/*.tpc; do
-    if [[ -f "$file" ]]; then
-        ((err_total++))
-        echo -n "Test $file : "
-        
-        ./bin/tpcc < "$file" > /dev/null 2>&1
-        status=$?
-
-        # Vérifier le code de retour attendu
-        if [[ $status -eq 1 ]]; then
-            echo "[OK]"
-            ((err_pass++))
-        else
-            echo "[FAIL] (Code retour : $status)"
-        fi
-    fi
-done
-
-# Résumé
+# Récap global
 echo ""
-echo "=== RÉCAPITULATIF ==="
-echo "Tests corrects réussis : $good_pass / $good_total"
-echo "Tests incorrects réussis : $err_pass / $err_total"
-total_score=$((good_pass + err_pass))
-total_tests=$((good_total + err_total))
-echo "Score total : $total_score / $total_tests"
+echo "=== RÉCAPITULATIF GLOBAL ==="
+
+for key in good syn-err sem-err warn; do
+    pass=${pass_counts[$key]:-0}
+    total=${total_counts[$key]:-0}
+    printf "Tests %-12s : %d / %d\n" "$key" "$pass" "$total"
+done
+
+echo "Score total        : $total_pass / $total_tests"
