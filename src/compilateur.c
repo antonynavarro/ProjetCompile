@@ -15,6 +15,7 @@ void translate(Node* root, bool show) {
     addSymbol(&globalTable, "putint", "void", GLOBAL, 0, 1, 0, 0);
 
     //table des variables globales
+    addFun(&globalTable);
     generateGlobalSymbolTable(root, &globalTable);
     if (show) {printSymbolTable(&globalTable);}
 
@@ -34,6 +35,7 @@ void translate(Node* root, bool show) {
         return;
     }
 
+
     FILE *out = fopen("_anonymous.asm", "w");
     if (!out) {
         perror("Error opening _anonymous.asm");
@@ -41,8 +43,8 @@ void translate(Node* root, bool show) {
     }
 
     emitNASMHeader(out, &globalTable);
-    generateNASM(root, &globalTable, out);
-
+    generateNASM(root, &globalTable,NULL, out);
+    add_fun_asm(out);
     //executer code nasm avec : nasm -felf64 _anonymous.asm && ld _anonymous.o -o prog && ./prog
 
     

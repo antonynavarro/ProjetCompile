@@ -26,6 +26,8 @@ typedef struct TableSymbole {
   int          count;
 } TableSymbole;
 
+
+void addFun(TableSymbole* table);
 int  identExiste(const TableSymbole*, const char*);
 void addSymbol(TableSymbole*, const char*, const char*, Scope, int address, int isFunction, int isStatic, int isParam);
 void generateGlobalSymbolTable(Node*, TableSymbole*);
