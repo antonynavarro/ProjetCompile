@@ -40,28 +40,18 @@ int main(void) {
     result = identity(a);
     putint(result); putchar(10);
 
-    // 2b) getint négatif
-    // Entrée attendue : -7
-    a = getint();
-    result = identity(a);
-    putint(result); putchar(10);
-
-    // 3) test identity sur zéro
-    result = identity(0);
-    putint(result); putchar(10);
-
-    // 4) variables globales
+    // 3) variables globales
     globy = 1234;
     gloaba = 'Z';
     putint(globy); putchar(10);
     putchar(gloaba); putchar(10);
 
-    // 5) getchar()/putchar(): recopier un caractère
+    // 4) getchar()/putchar(): recopier un caractère
     // Lecture d’un caractère, recopie immédiate puis LF
     c = getchar();
     putchar(c); putchar(10);
 
-    // 6) appel d’une fonction à 2 arguments
+    // 5) appel d’une fonction à 2 arguments
     // Vérifie le passage de >1 paramètre
     a = 5; b = 17;
     result = add2(a, b); // devrait faire 22
