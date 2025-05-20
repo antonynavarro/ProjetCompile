@@ -394,12 +394,12 @@ int main(int argc, char * argv[]) {
                 translate(root, false);
                 break;
         }
-        printf("Code erreur : %d\n", sem_error);
+        fprintf(stderr, "Code erreur : %d\n", sem_error);
         return sem_error;        
         
     } else 
-        printf("Erreur pendant l'analyse à la ligne %d, code de retour : %d\n",lineno, parseResult);
+        fprintf(stderr, "Erreur pendant l'analyse à la ligne %d, code de retour : %d\n",lineno, parseResult);
 
-    printf("Code erreur : %d\n", sem_error);
+    fprintf(stderr, "Code erreur : %d\n", parseResult);
     return parseResult;
 }

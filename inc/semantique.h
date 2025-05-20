@@ -5,9 +5,9 @@
 #include "tabsymbole.h"
 
 void verifyIdentifiers(Node*, const TableSymbole*, const TableSymbole*);
+void verifyFucntions(Node*, Node*, const TableSymbole*);
 const char *exprType(Node*, const TableSymbole*, const TableSymbole*);
 void checkAssignments(Node*, const TableSymbole*, const TableSymbole*);
-
 void verifyReturns(Node *node, const TableSymbole *global);
 void verifyMainExists(const TableSymbole *global) ;
 

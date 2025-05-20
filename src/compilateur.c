@@ -4,8 +4,6 @@
 #include "tree.h"
 #include <ctype.h>
 
-#define MAX_SYMBOLES 100
-
 // Grosse fonction qui fait tout (à séparer plus tard)
 void translate(Node* root, bool show) {
 	
@@ -17,12 +15,17 @@ void translate(Node* root, bool show) {
     if (show) {printSymbolTable(&globalTable);}
 
     // tables des fonctions et vars locals
-    generateLocalSymbolTable(root, NULL);
+    generateLocalSymbolTable(root);
     if (show) {printAllLocalSymbolTables(root);}
 
+    addSymbol(&globalTable, "getchar", "char", GLOBAL, 0, 1, 0, 0);
+    addSymbol(&globalTable, "putchar", "void", GLOBAL, 0, 1, 0, 0);
+    addSymbol(&globalTable, "getint", "int", GLOBAL, 0, 1, 0, 0);
+    addSymbol(&globalTable, "putint", "void", GLOBAL, 0, 1, 0, 0);
 
-    //verifyIdentifiers(root, &globalTable, NULL);
-    verifyMainExists(&globalTable); // <- après la table des symboles
+    verifyIdentifiers(root, &globalTable, NULL);
+    //verifyFucntions(root, root, &globalTable);
+    verifyMainExists(&globalTable);
     verifyReturns(root, &globalTable);
     checkAssignments(root, &globalTable, NULL);
 

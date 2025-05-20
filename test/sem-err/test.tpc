@@ -1,15 +1,25 @@
-int TEST;
-
-char print(char test){
-    return test;
+int aled (int a, int b){
+    int c;
+    c = 1;
+    return a + b + c;
 }
 
-int aled (int a, int b){
-    return a + b + TEST;
+void oskour(void){
+    return;
 }
 
 int main (void) {
-    int a;
-    a = 2;
-    return 0;
+    char a;
+    int b;
+    int c;
+    if (a) {
+        if (b) {
+            return 1;
+        }
+    }
+    a = 'c';
+    b = 1;
+    c = aled(a, b);
+    oskour();
+    return c;
 }
