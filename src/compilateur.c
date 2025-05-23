@@ -9,6 +9,11 @@ void translate(Node* root, bool show) {
 	
     TableSymbole globalTable = {.count = 0};
 
+    addSymbol(&globalTable, "getchar", "char", GLOBAL, 0, 1, 0, 0);
+    addSymbol(&globalTable, "putchar", "void", GLOBAL, 0, 1, 0, 0);
+    addSymbol(&globalTable, "getint", "int", GLOBAL, 0, 1, 0, 0);
+    addSymbol(&globalTable, "putint", "void", GLOBAL, 0, 1, 0, 0);
+
     //table des variables globales
     //addFun(&globalTable);
     generateGlobalSymbolTable(root, &globalTable);
@@ -18,18 +23,17 @@ void translate(Node* root, bool show) {
     generateLocalSymbolTable(root);
     if (show) {printAllLocalSymbolTables(root);}
 
-    addSymbol(&globalTable, "getchar", "char", GLOBAL, 0, 1, 0, 0);
-    addSymbol(&globalTable, "putchar", "void", GLOBAL, 0, 1, 0, 0);
-    addSymbol(&globalTable, "getint", "int", GLOBAL, 0, 1, 0, 0);
-    addSymbol(&globalTable, "putint", "void", GLOBAL, 0, 1, 0, 0);
-
     verifyIdentifiers(root, &globalTable, NULL);
-    //verifyFucntions(root, root, &globalTable);
+    //verifyFunctions(root, root, &globalTable, NULL);
     verifyMainExists(&globalTable);
     verifyReturns(root, &globalTable);
     checkAssignments(root, &globalTable, NULL);
 
 
+    if (sem_error == 2) {
+        fprintf(stderr, "Compilation failed due to semantic errors.\n");
+        return;
+    }
 
 
     FILE *out = fopen("_anonymous.asm", "w");

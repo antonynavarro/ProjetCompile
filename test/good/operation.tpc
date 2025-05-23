@@ -1,3 +1,19 @@
-void operation (void){
-    a = 2 + 4;
+int main (void){
+    int a;
+    int b;
+    int sum;
+    int diff;
+    int prod;
+    int quot;
+    int mod;
+
+    a = 10;
+    b = 5;
+    sum = a + b;
+    diff = a - b;
+    prod = a * b;
+    quot = a / b;
+    mod = a % b;
+
+    return 0;
 }

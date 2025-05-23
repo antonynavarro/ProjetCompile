@@ -1,0 +1,8 @@
+int foo(void) { 
+}
+
+char barr (void){
+    return;
+}
+
+int main(void) { return foo(); }

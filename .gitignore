@@ -2,3 +2,4 @@ bin/
 obj/
 _anonymous.asm
 .DS_Store
+.vscode/

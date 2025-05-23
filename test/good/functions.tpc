@@ -8,3 +8,7 @@ char text(char t){
 
 void print(int s){
 }
+
+int main(void){
+    return 0;
+}

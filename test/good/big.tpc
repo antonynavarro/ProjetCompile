@@ -10,7 +10,7 @@ void vars(void){
     char f, g, h;
 }
 
-void local (void){
+int local (void){
     static int foo;
     static char bar;
     static int max, min, avrg;

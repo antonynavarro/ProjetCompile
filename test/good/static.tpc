@@ -1,4 +1,4 @@
-void local (void){
+int main (void){
     static int foo;
     static char bar;
     static int max, min, avrg;

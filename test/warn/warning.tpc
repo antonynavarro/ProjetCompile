@@ -1,28 +1,24 @@
-char c;      // variable globale de type char
-int  i;      // variable globale de type int
+char c;      
+int  i;      
 int yoloswag;
 
 void foo(void) {
     char  lc; 
     int   li;
 
-    // — Cas valides
-    lc = 'A';     // littéral char → char   ✓
-    li = 42;      // littéral int  → int    ✓
-    li = lc;      // char         → int    ✓
-
-    // — Cas générant warning
-    lc = li;      // int          → char   WARNING
-    lc = 300;     // littéral int → char   WARNING
+    lc = 'A';    
+    li = 42;      
+    li = lc;  
+    lc = li; 
+    lc = 300;
 }
 
 int main(void) {
     char mc;
     int  mi;
 
-    mc = i;       // int          → char WARNING
-    mi = c;       // char         → int    
-
+    mc = i; 
+    mi = c;  
     return 0;
 }
 

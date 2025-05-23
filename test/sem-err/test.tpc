@@ -1,6 +1,7 @@
 int aled (int a, int b){
     int c;
     c = 1;
+    aled(a,b);
     return a + b + c;
 }
 
@@ -21,5 +22,5 @@ int main (void) {
     b = 1;
     c = aled(a, b);
     oskour();
-    return c;
+    return !a;
 }

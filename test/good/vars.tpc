@@ -3,13 +3,10 @@ char BAR;
 int MAX, MIN;
 char TEXT, FILE;
 
-void vars(void){
+int main(void){
     int a;
     char b;
     int c, d, e;
     char f, g, h;
-}
-
-int add(int a, int b){
-    return a + b;
+    return 0;
 }

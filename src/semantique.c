@@ -79,39 +79,68 @@ void verifyIdentifiers(Node *node,
 }
 
 /* Vérifie que toutes les fonctions utilisent les bons paramètres. */
-void verifyFucntions(Node *node,
+void verifyFunctions(Node *node,
                      Node *root, 
-                     const TableSymbole *global)
+                     const TableSymbole *global, 
+                     const TableSymbole *local)
 {
     if (!node) return;
+
+    if (strcmp(node->label, "Function") == 0 && node->localTable) { local = node->localTable; }
 
     const Symbole *sym = NULL;
 
     if (strcmp(node->label, "Ident") == 0 && (sym = lookupSymbol(global, NULL, node->value)) && sym->isFunction) {
 
         Node *functionChild = node->firstChild;
-        TableSymbole *local = lookupLocalTable(root, node->value);
+        TableSymbole *functionLocal = lookupLocalTable(root, node->value);
 
-        if (!local) {
+        if (!functionLocal && 
+            strcmp(node->value, "getchar") != 0 && 
+            strcmp(node->value, "getint") != 0  &&
+            strcmp(node->value, "putchar") != 0 &&
+            strcmp(node->value, "putint") != 0) {
             fprintf(stderr,
                 "error (line %d): function '%s' not declared\n",
                 node->lineno, node->value);
             sem_error = 2;
+            verifyFunctions(node->nextSibling, root, global, local);
             return;
         }
 
-        if (local->count == 0 && functionChild) {
+        if ((strcmp(node->value, "getchar") == 0 ||
+            strcmp(node->value, "getint") == 0  ||
+            strcmp(node->value, "putchar") == 0 ||
+            strcmp(node->value, "putint") == 0)) {
+                if (functionChild) {
+                    fprintf(stderr,
+                        "error (line %d): function '%s' does not take any arguments\n",
+                        node->lineno, node->value);
+                    sem_error = 2;
+                } 
+            verifyFunctions(node->nextSibling, root, global, local);
+            return;
+
+        } else if (functionLocal->count == 0 && functionChild) {
             fprintf(stderr,
                 "error (line %d): function '%s' too many arguments\n",
                 node->lineno, node->value);
             sem_error = 2;
+            verifyFunctions(node->nextSibling, root, global, local);
             return;
+        }
+
+        int count = 0;
+        for (int i = 0; i < functionLocal->count; i++) {
+            if (functionLocal->symb[i].isParam) {
+                count++;
+            }
         }
 
         if (functionChild && strcmp(functionChild->label, "Args") == 0) {
 
             functionChild = functionChild->firstChild;
-            for (int i = 0; i < local->count - 1; i++) {
+            for (int i = 0; i < count; i++) {
                 
                 if (!functionChild) {
                     fprintf(stderr,
@@ -119,27 +148,33 @@ void verifyFucntions(Node *node,
                         node->lineno, node->value);
                     sem_error = 2;
                     return;
+                } 
+                
+                const char *argType = NULL;
+                
+                if (strcmp(functionChild->label, "Ident") == 0) {
+                    argType = lookupType(global, local, functionChild->value);
+                } else if (isdigit(functionChild->label[0]) ||
+                           (functionChild->label[0]=='-' && isdigit(functionChild->label[1]))) {
+                    argType = "int";
+                } else {
+                    argType = "char";
                 }
-
-                const char *argType = lookupType(global, local, functionChild->value);
 
                 if (!argType) {
                     fprintf(stderr,
                         "error (line %d): argument '%s' not declared\n",
-                        node->lineno, functionChild->label);
+                        node->lineno, 
+                        strcmp(functionChild->label, "Ident") == 0 ? functionChild->value : functionChild->label);
                     sem_error = 2;
-                    return;
-                }
-
-                if (strcmp(local->symb[i].type, argType) != 0) {
+                } else if (strcmp(functionLocal->symb[i].type, argType) != 0) {
                     fprintf(stderr,
                         "error (line %d): argument '%s' type mismatch (need '%s'/got '%s'\n",
                         node->lineno, 
                         functionChild->label,
-                        local->symb[i].type,
+                        functionLocal->symb[i].type,
                         argType);
                     sem_error = 2;
-                    return;
                 }
 
                 functionChild = functionChild->nextSibling;
@@ -150,14 +185,13 @@ void verifyFucntions(Node *node,
                     "error (line %d): function '%s' too many arguments\n",
                     node->lineno, node->value);
                 sem_error = 2;
-                return;
             }
 
         }
     }
 
-    verifyFucntions(node->firstChild, root, global);
-    verifyFucntions(node->nextSibling, root, global);
+    verifyFunctions(node->firstChild, root, global, local);
+    verifyFunctions(node->nextSibling, root, global, local);
 }
 
 /* Calcule le type d’une expression. */
@@ -183,7 +217,9 @@ const char* exprType(Node *node,
         !strcmp(node->label,"DivStar")||
         !strcmp(node->label,"Order")  ||
         !strcmp(node->label,"Or")     ||
-        !strcmp(node->label,"And"))
+        !strcmp(node->label,"And")    ||
+        !strcmp(node->label,"Not")     
+    )
     {
         return "int";
     }
@@ -265,14 +301,21 @@ static void checkReturnsInSubtree(Node *n,
                 fprintf(stderr,
                     "warning (line %d): return from ‘int’ to ‘char’ may lose data\n",
                     n->lineno);
-            } else if (strcmp(expectedType, actualType) != 0) {
+            } else if (strcmp(expectedType, "void") == 0 && strcmp(actualType, expectedType) != 0) {
                 fprintf(stderr,
                     "error (line %d): return type ‘%s’ does not match function return type ‘%s’\n",
                     n->lineno,
-                    actualType ? actualType : "void",
+                    actualType,
                     expectedType);
                 sem_error = 2;
             }
+        }
+        else if(strcmp(expectedType, "void") != 0) {
+            fprintf(stderr,
+                "error (line %d): function returning ‘%s’ must return a value\n",
+                n->lineno,
+                expectedType);
+            sem_error = 2;
         }
     }
 
@@ -293,7 +336,7 @@ void verifyReturns(Node *node, const TableSymbole *global) {
 
         if (strcmp(expectedType, "void") != 0 && !hasReturn) {
             fprintf(stderr,
-                "error (line %d): function '%s' with non-void return type must return a value\n",
+                "error (line %d): function '%s' missing return\n",
                 node->lineno,
                 FIRSTCHILD(node->firstChild)->nextSibling->label);
             sem_error = 2;

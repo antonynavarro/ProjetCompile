@@ -1,29 +1,19 @@
-// test/stack_balance.tpc
-
-// Variables globales
 int a, b, c, d, e;
 
-// Fonction auxiliaire
 int muladd(int x, int y, int z) {
-    // calcule x*y + z
     return x * y + z;
 }
 
 int main(void) {
-    // initialisations
     a = 1;
     b = 2;
     c = 3;
     d = 4;
     e = 5;
 
-    // expression complexe : a + b*c - d/e
     a = a + b * c - d / e;
-
-    // appel de fonction à plusieurs paramètres
     c = muladd(a, b, c);
 
-    // conditionnelle avec else
     if (c == 0) {
         b = b + c;
     } else {
