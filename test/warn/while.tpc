@@ -1,0 +1,78 @@
+int main(void) {
+    int a, b, c, d, tmp;
+    
+    // Test 1: Décompte simple
+    a = 10;
+    while(a != 0) {
+        a = a - 1;
+    }
+    if(a == 0) {
+        putint(1);
+        putchar(58); // caractère ":"
+        putchar(79); // 'O'
+        putchar(75); // 'K'
+        putchar(10); // '\n'
+    }
+    
+    // Test 2: Compte jusqu'à une limite
+    b = 5;
+    while(b < 15) {
+        b = b + 1;
+    }
+    if(b == 15) {
+        putint(2);
+        putchar(58); // caractère ":"
+        putchar(79); // 'O'
+        putchar(75); // 'K'
+        putchar(10); // '\n'
+    }
+    
+    // Test 3: Boucle avec condition composée
+    c = 1;
+    tmp = 0;
+    while(c < 100 && tmp < 6) {
+        c = c * 2;
+        tmp = tmp + 1;
+    }
+    if(c == 64) {
+        putint(3);
+        putchar(58); // caractère ":"
+        putchar(79); // 'O'
+        putchar(75); // 'K'
+        putchar(10); // '\n'
+    }
+    
+    // Test 4: Boucles imbriquées
+    d = 0;
+    tmp = 3;
+    while(tmp > 0) {
+        a = 2;
+        while(a > 0) {
+            d = d + 1;
+            a = a - 1;
+        }
+        tmp = tmp - 1;
+    }
+    if(d == 6) {
+        putint(4);
+        putchar(58); // caractère ":"
+        putchar(79); // 'O'
+        putchar(75); // 'K'
+        putchar(10); // '\n'
+    }
+    
+    // Test 5: Condition initialement fausse
+    a = 5;
+    while(a > 10) {
+        a = a + 1;
+    }
+    if(a == 5) {
+        putint(5);
+        putchar(58); // caractère ":"
+        putchar(79); // 'O'
+        putchar(75); // 'K'
+        putchar(10); // '\n'
+    }
+    
+    return 0;
+}
