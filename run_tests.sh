@@ -38,7 +38,7 @@ run_test() {
     for file in "$dir_path"/*.tpc; do
         [[ -f "$file" ]] || continue
         ((total++))
-        echo "Test $file :"
+        echo -n "Test $file :"
 
         errors=$(./bin/tpcc < "$file" 2>&1 1>/dev/null)
         status=$?
@@ -65,10 +65,6 @@ run_test() {
 }
 
 # Parcourir tous les sous-dossiers de TEST_DIR
-# for dir in "$TEST_DIR"/*; do
-#     [[ -d "$dir" ]] || continue
-#     test_directory "$dir"
-# done
 if [[ $# -eq 0 ]]; then
     for dir in "$TEST_DIR"/*; do
         [[ -d "$dir" ]] || continue

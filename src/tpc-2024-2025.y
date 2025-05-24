@@ -309,7 +309,7 @@ void print_help(char * prog){
   printf("Commande :\n");
   printf("  %s [OPTIONS] [FICHIER]\n", prog);
   printf("Options : \n");
-  printf("  -t, --tree    Affiche l'arbre abstrai du fichier\n");
+  printf("  -t, --tree    Affiche l'arbre abstrait du fichier\n");
   printf("  -h, --help    Affiche cette aide\n");
   printf("  -s, --symtabs  Affiche toutes les tables de symboles\n");
 }

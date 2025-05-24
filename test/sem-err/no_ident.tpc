@@ -1,8 +1,0 @@
-int main(void){
-    char a;
-    int b;
-    int c;
-    b = a + 20;
-    c = b + 20;
-    return 0;
-}
