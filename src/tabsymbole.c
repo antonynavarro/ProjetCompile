@@ -28,13 +28,6 @@ int identExisteDansScope(const TableSymbole* table, const char* ident, Scope sco
     return 0;
 }
 
-// void addFun(TableSymbole* table){
-//     addSymbol(table, "getint",    "int", GLOBAL, 0, 1, 0, 0);
-//     addSymbol(table, "putint",    "void",GLOBAL, 0, 1, 0, 0);
-//     addSymbol(table, "getchar",   "char",GLOBAL, 0, 1, 0, 0);
-//     addSymbol(table, "putchar",   "void",GLOBAL, 0, 1, 0, 0);
-// }
-
 void addSymbol(TableSymbole* table, const char* ident, const char* type, Scope scope, int address, int isFunction, int isStatic, int isParam) {
     if (identExiste(table, ident)) {
         fprintf(stderr,
@@ -133,33 +126,28 @@ void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
 void calculateLocalVariableAddresses(TableSymbole* localTable) {
     int currentOffset = 0;
     
-    // First, process parameters (if needed)
     for (int i = 0; i < localTable->count; i++) {
         if (localTable->symb[i].isFunction == 0) {
             size_t varSize;
             
-            // Determine variable size based on type
+            
             if (strcmp(localTable->symb[i].type, "int") == 0) {
                 varSize = 8;  // 64-bit integer
             } else if (strcmp(localTable->symb[i].type, "char") == 0) {
-                varSize = 1;  // 8-bit character
+                varSize = 1;  // 8-bit char
             } else {
-                // Default to 8 bytes for unknown types
+                // Default 8 bytes
                 varSize = 8;
             }
-            
-            // Align to 8-byte boundary
+                      
             currentOffset = (currentOffset + 7) & ~7;
-            
-            // Assign negative offset from rbp
+                   
             localTable->symb[i].address = -currentOffset - varSize;
             
-            // Increment offset
             currentOffset += varSize;
         }
     }
     
-    // Ensure total space is a multiple of 16 for stack alignment
     currentOffset = (currentOffset + 15) & ~15;
 }
 
@@ -170,18 +158,16 @@ void generateLocalSymbolTable(Node *node) {
         Node *head = node->firstChild;
         Node *body = head->nextSibling;
 
-        // Create a new local symbol table
         TableSymbole *local = malloc(sizeof(TableSymbole));
         local->count = 0;
-        node->localTable = local; // Attach table to this function node
+        node->localTable = local; // attacher a fonction
 
-        // Add parameters
+        // Ajoute parametres
         Node *paramNode = head->firstChild->nextSibling->nextSibling;
         if (paramNode && strcmp(paramNode->label, "Parameter") == 0) {
             Node *paramTypeNode = paramNode->firstChild;
             while (paramTypeNode) {
                 if (paramTypeNode->firstChild) {
-                    // Check for parameter conflicts
                     if (identExiste(local, paramTypeNode->firstChild->value)) {
                         fprintf(stderr,
                                 "Semantic Error: Parameter conflict \"%s\"\n", 
@@ -207,7 +193,7 @@ void generateLocalSymbolTable(Node *node) {
                     while (typeNode) {
                         Node *identNode = typeNode->firstChild;
                         while (identNode) {
-                            // Check for local variable conflicts
+                            // Check conflicts
                             if (identExiste(local, identNode->value)) {
                                 fprintf(stderr,
                                     "Semantic Error: Local variable conflict \"%s\"\n", 
@@ -218,7 +204,6 @@ void generateLocalSymbolTable(Node *node) {
                             identNode = identNode->nextSibling;
                         }
                         
-                        // Handle static and non-static type nodes
                         if (strcmp(varTypeNode->label, "Static") == 0) {
                             varTypeNode = varTypeNode->nextSibling;
                             typeNode = varTypeNode ? varTypeNode->firstChild : NULL;
@@ -230,8 +215,6 @@ void generateLocalSymbolTable(Node *node) {
                 varNode = varNode->nextSibling;
             }
         }
-
-        // Calculate addresses for local variables
         calculateLocalVariableAddresses(local);
     }
 
@@ -271,7 +254,7 @@ size_t getTotalGlobalMemorySize() {
     return totalGlobalMemory;
 }
 
-// Génère le code assembleur pour la section .data (variables globales)
+// Génère le code assembleur pour la section .data
 void generateGlobalDataSection(FILE* out, TableSymbole* table) {
     fprintf(out, "\n.section .data\n");
     

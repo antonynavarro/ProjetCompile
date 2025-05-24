@@ -217,7 +217,7 @@ static const char *runtimeAsm =
 
 
 /*
-  Header NASM (bss + _start).
+  Header NASM
 */
 void emitNASMHeader(FILE *out, TableSymbole *globals) {
     fprintf(out, "section .data\n");
@@ -591,28 +591,24 @@ void generateNASM(Node *node,TableSymbole *globals,TableSymbole *locals,FILE *ou
 
     // ── Else (déjà traité par If) ────────────────────────
     if (!strcmp(node->label, "Else")) {
-        // Ce nœud est normalement traité par le nœud If
-        // Nous ne faisons rien ici pour éviter le double traitement
         return;
     }
 
     // ── Then (bloc de code du if) ────────────────────────
     if (!strcmp(node->label, "Then")) {
-        // Ce nœud est également traité par le nœud If directement
-        // Nous ne faisons rien ici pour éviter le double traitement
         return;
     }
 
     // ── Suite_instr (bloc d'instructions) ────────────────
     if (!strcmp(node->label, "Suite_instr")) {
-        // Traiter séquentiellement toutes les instructions dans le bloc
+        // Traiter toutes les instructions dans le bloc
         for (Node *instr = node->firstChild; instr; instr = instr->nextSibling) {
             generateNASM(instr, globals, locals, out);
         }
         return;
     }
 
-    // ── Appels prédéfinis (I/O) ──────────────────────────
+    // ── Appels prédéfinis──────────────────────────
     if (node->value) {
         if (!strcmp(node->value,"getint")) {
             fputs(
@@ -660,7 +656,7 @@ void generateNASM(Node *node,TableSymbole *globals,TableSymbole *locals,FILE *ou
         return;
     }
 
-    // ── Affectation : Eq (lhs = rhs) ───────────────────────
+    // ── Affectation : Eq  ───────────────────────
     if (!strcmp(node->label, "Eq") && !node->value) {
         Node *lhs = node->firstChild;
         Node *rhs = lhs->nextSibling;
@@ -702,13 +698,13 @@ void generateNASM(Node *node,TableSymbole *globals,TableSymbole *locals,FILE *ou
 
                 // --- identity(a) ou tout appel à 1 argument
                 if (!strcmp(fs->ident, "identity")) {
-                    // 1) évaluer a → résultat dans RAX
+                    
                     generateNASM(rhs->firstChild->firstChild, globals, locals, out);
-                    // 2) passer a dans RDI
+                    
                     fputs("    pop  rdi            ; préparer argument for identity\n", out);
-                    // 3) appeler
+                   
                     fprintf(out, "    call identity\n");
-                    // 4) stocker dans lhs
+                    
                     if (sym->scope == GLOBAL) {
                         fprintf(out, "    mov  [%s], rax    ; %s = identity(a)\n\n", 
                                sym->ident, sym->ident);
@@ -722,7 +718,7 @@ void generateNASM(Node *node,TableSymbole *globals,TableSymbole *locals,FILE *ou
             }
         }
 
-        // Cas général : évaluer rhs → push, pop une fois + mov
+        // Cas général 
         generateNASM(rhs, globals, locals, out);
         fputs("    pop  rax    ; valeur à affecter\n", out);
         
@@ -777,7 +773,7 @@ void generateNASM(Node *node,TableSymbole *globals,TableSymbole *locals,FILE *ou
         // Évaluer l'expression à nier
         generateNASM(node->firstChild, globals, locals, out);
         
-        // Nier le résultat (transformer 0→1 et non-0→0)
+        // Nier le résultat
         fputs("    pop  rax    ; valeur à nier\n", out);
         fputs("    test rax, rax\n", out);
         fputs("    setz al     ; al = (rax == 0) ? 1 : 0\n", out);
@@ -944,7 +940,7 @@ void generateNASM(Node *node,TableSymbole *globals,TableSymbole *locals,FILE *ou
             }
             
             if (n > 6) {
-                fprintf(stderr, "⚠️  plus de 6 arguments non gérés (fonction « %s »)\n", sym->ident);
+                fprintf(stderr, "plus de 6 arguments non gérés (fonction « %s »)\n", sym->ident);
             }
             
             /* Libérer la mémoire utilisée pour les nœuds d'arguments */
@@ -977,7 +973,7 @@ void generateNASM(Node *node,TableSymbole *globals,TableSymbole *locals,FILE *ou
         }
 
         /* ---------- 3. Variable globale ---------- */
-        if (!strcmp(sym->type,"char")) {  /* char => zéro-extension */
+        if (!strcmp(sym->type,"char")) {  
             fprintf(out,
               "    movzx rax, byte [%s] ; global %s (char)\n"
               "    push rax\n",
@@ -991,13 +987,13 @@ void generateNASM(Node *node,TableSymbole *globals,TableSymbole *locals,FILE *ou
         return;
     }
 
-    // ── Récursion par défaut ────────────────────────────────
+    // Récursion par défaut 
     for (Node *c = node->firstChild; c; c = c->nextSibling) {
         generateNASM(c, globals, locals, out);
     }
 }
 
-
+// Ajoute les fonctions predefini en NASM
 void add_fun_asm(FILE *out){
 
     fputs(runtimeAsm, out);
