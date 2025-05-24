@@ -1,0 +1,8 @@
+int main(void){
+    int x;
+    x = getint();
+    putint(x);
+    putchar(10); //saut de ligne
+    return 0;
+}
+

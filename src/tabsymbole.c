@@ -5,6 +5,9 @@
 
 int sem_error = 0;
 
+// Taille totale de la mémoire statique allouée pour les variables globales
+size_t totalGlobalMemory = 0;
+
 /* POUR LA TABLE DES SYMBOLES */
 int identExiste(const TableSymbole* table, const char* ident) {
     for (int i = 0; i < table->count; i++) {
@@ -49,6 +52,13 @@ void addSymbol(TableSymbole* table, const char* ident, const char* type, Scope s
     table->count++;
 }
 
+// Obtenir la taille en octets d'un type
+size_t getSizeOfType(const char* type) {
+    if (strcmp(type, "int") == 0) return 8;      // 64 bits
+    else if (strcmp(type, "char") == 0) return 1; // 8 bits
+    else return 8; // Taille par défaut
+}
+
 void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
     static size_t offset = 0;  // décalage cumulatif en octets pour les variables
 
@@ -68,23 +78,40 @@ void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
         }
     }
 
-    // Déclarations globales (inchangé)
+    // Déclarations globales avec gestion d'adresses
     if (strcmp(node->label, "Global") == 0) {
         Node *decl = node->firstChild;
         while (decl) {
-            size_t size;
-            if      (strcmp(decl->label, "int")  == 0) size = 8;
-            else if (strcmp(decl->label, "char") == 0) size = 1;
-            else { decl = decl->nextSibling; continue; }
-
+            // Vérifier si c'est un type valide
+            if (strcmp(decl->label, "int") != 0 && strcmp(decl->label, "char") != 0) {
+                decl = decl->nextSibling;
+                continue;
+            }
+            
+            size_t size = getSizeOfType(decl->label);
+            
+            // Traiter chaque variable de ce type
             for (Node *var = decl->firstChild; var; var = var->nextSibling) {
                 if (identExisteDansScope(table, var->value, GLOBAL)) {
                     fprintf(stderr,
-                            "Erreur sémantique : Variable globale \"%s\" redéclarée\n", var->label);
+                            "Erreur sémantique : Variable globale \"%s\" redéclarée\n", var->value);
                     sem_error = 2;
                 } else {
+                    // Aligner l'adresse si nécessaire (pour l'alignement des types)
+                    if (size > 1) {
+                        // Alignement sur la taille du type (8 octets pour int)
+                        offset = (offset + size - 1) & ~(size - 1);
+                    }
+                    
+                    // Ajouter le symbole avec l'adresse calculée
                     addSymbol(table, var->value, decl->label, GLOBAL, offset, 0, 0, 0);
+                    
+                    // Mettre à jour l'offset et la taille totale
                     offset += size;
+                    totalGlobalMemory += size;
+                    
+                    printf("Variable globale '%s' de type '%s' à l'adresse %zu\n", 
+                           var->value, decl->label, offset - size);
                 }
             }
             decl = decl->nextSibling;
@@ -96,6 +123,34 @@ void generateGlobalSymbolTable(Node *node, TableSymbole* table) {
 }
 
 
+void calculateLocalVariableAddresses(TableSymbole* localTable) {
+    int currentOffset = 0;
+    
+    for (int i = 0; i < localTable->count; i++) {
+        if (localTable->symb[i].isFunction == 0) {
+            size_t varSize;
+            
+            
+            if (strcmp(localTable->symb[i].type, "int") == 0) {
+                varSize = 8;  // 64-bit integer
+            } else if (strcmp(localTable->symb[i].type, "char") == 0) {
+                varSize = 1;  // 8-bit char
+            } else {
+                // Default 8 bytes
+                varSize = 8;
+            }
+                      
+            currentOffset = (currentOffset + 7) & ~7;
+                   
+            localTable->symb[i].address = -currentOffset - varSize;
+            
+            currentOffset += varSize;
+        }
+    }
+    
+    currentOffset = (currentOffset + 15) & ~15;
+}
+
 void generateLocalSymbolTable(Node *node) {
     if (!node) return;
 
@@ -103,12 +158,11 @@ void generateLocalSymbolTable(Node *node) {
         Node *head = node->firstChild;
         Node *body = head->nextSibling;
 
-        // Création d'une nouvelle table locale
         TableSymbole *local = malloc(sizeof(TableSymbole));
         local->count = 0;
-        node->localTable = local; // Attache la table a ce nœud de fonction
+        node->localTable = local; // attacher a fonction
 
-        // Ajouter les paramètres
+        // Ajoute parametres
         Node *paramNode = head->firstChild->nextSibling->nextSibling;
         if (paramNode && strcmp(paramNode->label, "Parameter") == 0) {
             Node *paramTypeNode = paramNode->firstChild;
@@ -116,7 +170,8 @@ void generateLocalSymbolTable(Node *node) {
                 if (paramTypeNode->firstChild) {
                     if (identExiste(local, paramTypeNode->firstChild->value)) {
                         fprintf(stderr,
-                                "Erreur sémantique : Conflit paramètre/variable locale \"%s\"\n", paramTypeNode->firstChild->label);
+                                "Semantic Error: Parameter conflict \"%s\"\n", 
+                                paramTypeNode->firstChild->label);
                         sem_error = 2;
                     }
                     addSymbol(local, paramTypeNode->firstChild->value, paramTypeNode->label, LOCAL, 0, 0, 0, 1);
@@ -125,24 +180,30 @@ void generateLocalSymbolTable(Node *node) {
             }
         }
 
-        // Ajouter les variables locales
+        // Add local variables
         if (body && strcmp(body->label, "Body") == 0) {
             Node *varNode = body->firstChild;
             while (varNode) {
                 if (strcmp(varNode->label, "Vars") == 0 && varNode->firstChild) {
                     Node *varTypeNode = varNode->firstChild;
-                    Node *typeNode = strcmp(varTypeNode->label, "Static") == 0 ? varNode->firstChild->firstChild : varNode->firstChild;
+                    Node *typeNode = strcmp(varTypeNode->label, "Static") == 0 
+                        ? varNode->firstChild->firstChild 
+                        : varNode->firstChild;
+                    
                     while (typeNode) {
                         Node *identNode = typeNode->firstChild;
                         while (identNode) {
-                            if (identNode && identExiste(local, identNode->value)) {
+                            // Check conflicts
+                            if (identExiste(local, identNode->value)) {
                                 fprintf(stderr,
-                                    "Erreur sémantique : Conflit paramètre/variable locale \"%s\"\n", identNode->value);
+                                    "Semantic Error: Local variable conflict \"%s\"\n", 
+                                    identNode->value);
                                 sem_error = 2;
                             }
                             addSymbol(local, identNode->value, typeNode->label, LOCAL, 0, 0, strcmp(varTypeNode->label, "Static") == 0, 0);
                             identNode = identNode->nextSibling;
                         }
+                        
                         if (strcmp(varTypeNode->label, "Static") == 0) {
                             varTypeNode = varTypeNode->nextSibling;
                             typeNode = varTypeNode ? varTypeNode->firstChild : NULL;
@@ -154,11 +215,15 @@ void generateLocalSymbolTable(Node *node) {
                 varNode = varNode->nextSibling;
             }
         }
+        calculateLocalVariableAddresses(local);
     }
 
+    // Recursive traversal
     generateLocalSymbolTable(node->firstChild);
     generateLocalSymbolTable(node->nextSibling);
 }
+
+
 
 void printSymbolTable(TableSymbole* table) {
     for (int i = 0; i < table->count; i++) {
@@ -182,4 +247,29 @@ void printAllLocalSymbolTables(Node *node) {
 
     printAllLocalSymbolTables(node->firstChild);
     printAllLocalSymbolTables(node->nextSibling);
+}
+
+// Fonction pour obtenir la taille totale de la mémoire statique
+size_t getTotalGlobalMemorySize() {
+    return totalGlobalMemory;
+}
+
+// Génère le code assembleur pour la section .data
+void generateGlobalDataSection(FILE* out, TableSymbole* table) {
+    fprintf(out, "\n.section .data\n");
+    
+    // Parcourir toute la table des symboles pour générer le code pour les variables globales
+    for (int i = 0; i < table->count; i++) {
+        // Ignorer les fonctions
+        if (table->symb[i].isFunction) continue;
+        
+        // Traiter uniquement les variables globales
+        if (table->symb[i].scope == GLOBAL) {
+            if (strcmp(table->symb[i].type, "int") == 0) {
+                fprintf(out, "    %s: .quad 0\n", table->symb[i].ident);
+            } else if (strcmp(table->symb[i].type, "char") == 0) {
+                fprintf(out, "    %s: .byte 0\n", table->symb[i].ident);
+            }
+        }
+    }
 }

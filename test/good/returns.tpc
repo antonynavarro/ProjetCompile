@@ -1,0 +1,98 @@
+// Fonction qui retourne une valeur directement
+int valeur_fixe(void) {
+    return 42;
+}
+
+// Fonction qui retourne un paramètre
+int identity(int x) {
+    return x;
+}
+
+// Fonction avec calcul et retour
+int somme(int a, int b) {
+    int resultat;
+    resultat = a + b;
+    return resultat;
+}
+
+// Fonction avec retour conditionnel
+int max(int a, int b) {
+    if (a > b) {
+        return a;
+    }
+    return b;
+}
+
+// Fonction avec return dans une boucle
+int trouver_seuil(int debut, int seuil) {
+    int i;
+    i = debut;
+    while (i < 100) {
+        if (i >= seuil) {
+            return i;
+        }
+        i = i + 1;
+    }
+    return 0; // Cas où seuil >= 100
+}
+
+// Fonction principale qui appelle et vérifie toutes les autres
+int main(void) {
+    int test;
+    
+    // Test 1: Valeur fixe
+    test = valeur_fixe();
+    if (test == 42) {
+        putint(1);
+        putchar(79); // 'O'
+        putchar(75); // 'K'
+        putchar(10); // '\n'
+    }
+    
+    // Test 2: Identity
+    test = identity(24);
+    if (test == 24) {
+        putint(2);
+        putchar(79);
+        putchar(75);
+        putchar(10);
+    }
+    
+    // Test 3: Somme
+    test = somme(15, 27);
+    if (test == 42) {
+        putint(3);
+        putchar(79);
+        putchar(75);
+        putchar(10);
+    }
+    
+    // Test 4: Max
+    test = max(18, 23);
+    if (test == 23) {
+        putint(4);
+        putchar(79);
+        putchar(75);
+        putchar(10);
+    }
+    
+    // Test 5: Return dans une boucle
+    test = trouver_seuil(10, 15);
+    if (test == 15) {
+        putint(5);
+        putchar(79);
+        putchar(75);
+        putchar(10);
+    }
+    
+    // Test 6: Return dans une boucle avec cas limite
+    test = trouver_seuil(90, 150);
+    if (test == 0) {
+        putint(6);
+        putchar(79);
+        putchar(75);
+        putchar(10);
+    }
+    
+    return 0;
+}
